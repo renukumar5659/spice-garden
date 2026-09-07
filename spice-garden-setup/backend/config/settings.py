@@ -331,3 +331,6 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
     X_FRAME_OPTIONS = "DENY"
+    MIGRATION_MODULES = {
+    "menu": "menu.migrations",
+}
