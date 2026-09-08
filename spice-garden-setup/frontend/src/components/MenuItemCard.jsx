@@ -4,7 +4,9 @@ import { useToast } from "../context/ToastContext";
 import SpiceMeter from "./SpiceMeter";
 import VegBadge from "./VegBadge";
 
-const API_ORIGIN = "http://127.0.0.1:8000";
+const API_ORIGIN =
+  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+  "http://127.0.0.1:8000";
 
 function getImageUrl(image) {
   if (!image) {
