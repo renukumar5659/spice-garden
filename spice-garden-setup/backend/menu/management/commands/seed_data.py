@@ -1,8 +1,5 @@
-import os
-
 from django.core.management.base import BaseCommand
 from menu.models import Category, MenuItem
-from users.models import User
 
 
 CATEGORIES = ["Starters", "Main Course", "Rice & Noodles", "Coolers"]
@@ -147,31 +144,6 @@ class Command(BaseCommand):
     help = "Seed the database with sample Spice Garden Restaurant categories and menu items."
 
     def handle(self, *args, **options):
-        # Temporary admin account setup.
-        # These values come from Render environment variables.
-        admin_email = os.getenv("ADMIN_EMAIL")
-        admin_password = os.getenv("ADMIN_PASSWORD")
-
-        if admin_email and admin_password:
-            admin_user, created = User.objects.get_or_create(
-                email=admin_email,
-                defaults={
-                    "username": admin_email[:150],
-                },
-            )
-
-            admin_user.set_password(admin_password)
-            admin_user.is_staff = True
-            admin_user.is_superuser = True
-            admin_user.is_active = True
-            admin_user.save()
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"{'Created' if created else 'Reset'} admin user: {admin_email}"
-                )
-            )
-
         # Seed categories.
         category_map = {}
 
