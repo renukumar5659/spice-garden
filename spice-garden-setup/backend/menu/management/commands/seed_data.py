@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 from menu.models import Category, MenuItem
-from users.models import User
-import os
 
 
 CATEGORIES = ["Starters", "Main Course", "Rice & Noodles", "Coolers"]
@@ -135,32 +133,6 @@ class Command(BaseCommand):
     help = "Seed the database with sample Spice Garden Restaurant categories and menu items."
 
     def handle(self, *args, **options):
-
-        # Configure Django admin account from environment variables.
-        admin_email = os.getenv("ADMIN_EMAIL")
-        admin_password = os.getenv("ADMIN_PASSWORD")
-
-        if admin_email and admin_password:
-            admin_user, created = User.objects.get_or_create(
-                email=admin_email,
-                defaults={
-                    "username": admin_email,
-                    "is_staff": True,
-                    "is_superuser": True,
-                    "is_active": True,
-                },
-            )
-
-            admin_user.username = admin_email
-            admin_user.is_staff = True
-            admin_user.is_superuser = True
-            admin_user.is_active = True
-            admin_user.set_password(admin_password)
-            admin_user.save()
-
-            self.stdout.write(
-                self.style.SUCCESS("Admin account configured.")
-            )
 
         # Seed categories.
         category_map = {}
