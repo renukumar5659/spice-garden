@@ -5,6 +5,19 @@ export async function placeOrder(payload) {
   return data;
 }
 
+export async function createRazorpayOrder(id) {
+  const { data } = await api.post(`/orders/${id}/razorpay/`);
+  return data;
+}
+
+export async function verifyRazorpayPayment(id, paymentData) {
+  const { data } = await api.post(
+    `/orders/${id}/razorpay/verify/`,
+    paymentData
+  );
+  return data;
+}
+
 export async function fetchOrders() {
   const { data } = await api.get("/orders/");
   return data.results ?? data;

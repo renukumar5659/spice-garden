@@ -40,8 +40,6 @@ DEBUG = config(
 
 
 # Render automatically provides RENDER_EXTERNAL_HOSTNAME.
-# We include it when available while keeping localhost defaults
-# for local development.
 RENDER_EXTERNAL_HOSTNAME = os.environ.get(
     "RENDER_EXTERNAL_HOSTNAME"
 )
@@ -65,6 +63,21 @@ ALLOWED_HOSTS = config(
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default="http://localhost:5173",
+)
+
+
+# ============================================================
+# Razorpay
+# ============================================================
+
+RAZORPAY_KEY_ID = config(
+    "RAZORPAY_KEY_ID",
+    default="",
+)
+
+RAZORPAY_KEY_SECRET = config(
+    "RAZORPAY_KEY_SECRET",
+    default="",
 )
 
 
@@ -217,6 +230,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # ============================================================
 
 LANGUAGE_CODE = "en-us"
+
 TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
@@ -228,6 +242,7 @@ USE_TZ = True
 # ============================================================
 
 STATIC_URL = "/static/"
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # WhiteNoise compressed static files.
@@ -241,6 +256,7 @@ STATICFILES_STORAGE = (
 # ============================================================
 
 MEDIA_URL = "/media/"
+
 MEDIA_ROOT = BASE_DIR / "media"
 
 
@@ -318,17 +334,19 @@ CSRF_TRUSTED_ORIGINS = [
 # Production security
 # ============================================================
 
-# Production security settings
-# Production security settings
 if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+
     SECURE_SSL_REDIRECT = True
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    SECURE_PROXY_SSL_HEADER = (
+        "HTTP_X_FORWARDED_PROTO",
+        "https",
+    )
 
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
     X_FRAME_OPTIONS = "DENY"
-    
