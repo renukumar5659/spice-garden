@@ -13,22 +13,49 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ["id", "menu_item", "menu_item_detail", "quantity", "price", "line_total"]
+        fields = [
+            "id",
+            "menu_item",
+            "menu_item_detail",
+            "quantity",
+            "price",
+            "line_total",
+        ]
         read_only_fields = ["price"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    """Read serializer — includes nested items and customer's name for admin views."""
+    """Read serializer — includes order and payment information."""
     items = OrderItemSerializer(many=True, read_only=True)
     customer_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            "id", "order_id", "customer", "customer_name", "full_name", "phone", "email",
-            "delivery_address", "pin_code", "special_instructions",
-            "subtotal", "delivery_charge", "total_amount", "status",
-            "items", "created_at", "updated_at",
+            "id",
+            "order_id",
+            "customer",
+            "customer_name",
+            "full_name",
+            "phone",
+            "email",
+            "delivery_address",
+            "pin_code",
+            "special_instructions",
+            "subtotal",
+            "delivery_charge",
+            "total_amount",
+            "status",
+
+            # Payment information
+            "payment_status",
+            "razorpay_order_id",
+            "razorpay_payment_id",
+            "razorpay_signature",
+
+            "items",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 
@@ -37,19 +64,27 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class CartItemInputSerializer(serializers.Serializer):
-    menu_item = serializers.PrimaryKeyRelatedField(queryset=MenuItem.objects.filter(available=True))
+    menu_item = serializers.PrimaryKeyRelatedField(
+        queryset=MenuItem.objects.filter(available=True)
+    )
     quantity = serializers.IntegerField(min_value=1)
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
     """Write serializer used at checkout — takes cart items and delivery details."""
+
     items = CartItemInputSerializer(many=True, write_only=True)
 
     class Meta:
         model = Order
         fields = [
-            "full_name", "phone", "email", "delivery_address",
-            "pin_code", "special_instructions", "items",
+            "full_name",
+            "phone",
+            "email",
+            "delivery_address",
+            "pin_code",
+            "special_instructions",
+            "items",
         ]
 
     def validate_items(self, value):
@@ -60,7 +95,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop("items")
-        subtotal = sum(item["menu_item"].price * item["quantity"] for item in items_data)
+
+        subtotal = sum(
+            item["menu_item"].price * item["quantity"]
+            for item in items_data
+        )
+
         total = subtotal + DELIVERY_CHARGE
 
         order = Order.objects.create(
@@ -70,6 +110,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             total_amount=total,
             **validated_data,
         )
+
         OrderItem.objects.bulk_create([
             OrderItem(
                 order=order,
@@ -79,6 +120,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             )
             for item in items_data
         ])
+
         return order
 
 
