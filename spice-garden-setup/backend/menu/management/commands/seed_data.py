@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
 from menu.models import Category, MenuItem
+from users.models import User
+import os
 
 
 CATEGORIES = ["Starters", "Main Course", "Rice & Noodles", "Coolers"]
@@ -16,7 +18,6 @@ ITEMS = [
         "medium",
         "menu_items/images.webp",
     ),
-
     (
         "Starters",
         "Chicken Tikka",
@@ -27,7 +28,6 @@ ITEMS = [
         "medium",
         "menu_items/images_5.jfif",
     ),
-
     (
         "Starters",
         "Veg Manchurian",
@@ -38,7 +38,6 @@ ITEMS = [
         "hot",
         "menu_items/images_15.jfif",
     ),
-
     (
         "Main Course",
         "Paneer Butter Masala",
@@ -49,7 +48,6 @@ ITEMS = [
         "mild",
         "menu_items/images_12.jfif",
     ),
-
     (
         "Main Course",
         "Chicken Curry",
@@ -60,7 +58,6 @@ ITEMS = [
         "hot",
         "menu_items/images_4.jfif",
     ),
-
     (
         "Main Course",
         "Dal Tadka",
@@ -71,7 +68,6 @@ ITEMS = [
         "mild",
         "menu_items/images_8.jfif",
     ),
-
     (
         "Rice & Noodles",
         "Veg Fried Rice",
@@ -82,7 +78,6 @@ ITEMS = [
         "medium",
         "menu_items/images_19.jfif",
     ),
-
     (
         "Rice & Noodles",
         "Chicken Fried Rice",
@@ -93,7 +88,6 @@ ITEMS = [
         "medium",
         "menu_items/images_17.jfif",
     ),
-
     (
         "Rice & Noodles",
         "Hakka Noodles",
@@ -104,7 +98,6 @@ ITEMS = [
         "medium",
         "menu_items/images_18.jfif",
     ),
-
     (
         "Coolers",
         "Fresh Lime Soda",
@@ -115,7 +108,6 @@ ITEMS = [
         "mild",
         None,
     ),
-
     (
         "Coolers",
         "Mango Lassi",
@@ -126,7 +118,6 @@ ITEMS = [
         "mild",
         None,
     ),
-
     (
         "Coolers",
         "Cold Coffee",
@@ -144,6 +135,33 @@ class Command(BaseCommand):
     help = "Seed the database with sample Spice Garden Restaurant categories and menu items."
 
     def handle(self, *args, **options):
+
+        # Configure Django admin account from environment variables.
+        admin_email = os.getenv("ADMIN_EMAIL")
+        admin_password = os.getenv("ADMIN_PASSWORD")
+
+        if admin_email and admin_password:
+            admin_user, created = User.objects.get_or_create(
+                email=admin_email,
+                defaults={
+                    "username": admin_email,
+                    "is_staff": True,
+                    "is_superuser": True,
+                    "is_active": True,
+                },
+            )
+
+            admin_user.username = admin_email
+            admin_user.is_staff = True
+            admin_user.is_superuser = True
+            admin_user.is_active = True
+            admin_user.set_password(admin_password)
+            admin_user.save()
+
+            self.stdout.write(
+                self.style.SUCCESS("Admin account configured.")
+            )
+
         # Seed categories.
         category_map = {}
 
@@ -155,45 +173,54 @@ class Command(BaseCommand):
 
             category_map[name] = category
 
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"{'Created' if created else 'Exists'} category: {name}"
+            if created:
+                self.stdout.write(
+                    self.style.SUCCESS(f"Created category: {name}")
                 )
-            )
+            else:
+                self.stdout.write(
+                    f"Exists category: {name}"
+                )
 
         # Seed menu items.
         for (
-            cat_name,
+            category_name,
             name,
-            desc,
+            description,
             ingredients,
             price,
             is_veg,
-            spice,
+            spice_level,
             image,
         ) in ITEMS:
 
             item, created = MenuItem.objects.get_or_create(
                 name=name,
                 defaults={
-                    "category": category_map[cat_name],
-                    "description": desc,
+                    "category": category_map[category_name],
+                    "description": description,
                     "ingredients": ingredients,
                     "price": price,
                     "is_veg": is_veg,
-                    "spice_level": spice,
-                    "available": True,
+                    "spice_level": spice_level,
+                    "image": image,
                 },
             )
 
-            item.image = image
-            item.save(update_fields=["image"])
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"{'Created' if created else 'Exists'} item: {name}"
+            if created:
+                self.stdout.write(
+                    self.style.SUCCESS(f"Created item: {name}")
                 )
-            )
+            else:
+                # Keep existing item information but update its image
+                # when an image is provided.
+                if image:
+                    item.image = image
+                    item.save(update_fields=["image"])
+
+                self.stdout.write(
+                    f"Exists item: {name}"
+                )
 
         self.stdout.write(
             self.style.SUCCESS("Sample data seeding complete.")
