@@ -1,78 +1,129 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import * as authService from "../services/authService";
 
-const AuthContext = createContext(null);
+const CartContext = createContext(null);
+const STORAGE_KEY = "sg_cart";
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const DELIVERY_CHARGE = 40;
 
+function loadCart() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function CartProvider({ children }) {
+  const [items, setItems] = useState(loadCart);
+
+  // Save cart whenever it changes
   useEffect(() => {
-    const hasToken = localStorage.getItem("sg_access");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
-    if (!hasToken) {
-      setLoading(false);
+  // Clear cart immediately when user logs out
+  useEffect(() => {
+    function handleLogout() {
+      setItems([]);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    window.addEventListener("sg_logout", handleLogout);
+
+    return () => {
+      window.removeEventListener("sg_logout", handleLogout);
+    };
+  }, []);
+
+  function addItem(menuItem, quantity = 1) {
+    setItems((prev) => {
+      const existing = prev.find((i) => i.id === menuItem.id);
+
+      if (existing) {
+        return prev.map((i) =>
+          i.id === menuItem.id
+            ? { ...i, quantity: i.quantity + quantity }
+            : i
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          id: menuItem.id,
+          name: menuItem.name,
+          price: Number(menuItem.price),
+          image: menuItem.image,
+          is_veg: menuItem.is_veg,
+          quantity,
+        },
+      ];
+    });
+  }
+
+  function removeItem(id) {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  function updateQuantity(id, quantity) {
+    if (quantity < 1) {
+      removeItem(id);
       return;
     }
 
-    authService
-      .fetchProfile()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, []);
-
-  async function login(email, password) {
-    const loggedInUser = await authService.login(email, password);
-    setUser(loggedInUser);
-    return loggedInUser;
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, quantity } : i
+      )
+    );
   }
 
-  async function register(payload) {
-    return authService.register(payload);
+  function clearCart() {
+    setItems([]);
+    localStorage.removeItem(STORAGE_KEY);
   }
 
-  async function logout() {
-    await authService.logout();
+  const subtotal = items.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0
+  );
 
-    // Clear the shopping cart when the user logs out
-    localStorage.removeItem("sg_cart");
+  const total = items.length
+    ? subtotal + DELIVERY_CHARGE
+    : 0;
 
-    // Tell CartContext that logout happened
-    window.dispatchEvent(new Event("sg_logout"));
-
-    setUser(null);
-  }
-
-  async function refreshProfile() {
-    const profile = await authService.fetchProfile();
-    setUser(profile);
-    return profile;
-  }
+  const itemCount = items.reduce(
+    (sum, i) => sum + i.quantity,
+    0
+  );
 
   const value = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    isAdmin: !!user?.is_staff,
-    login,
-    register,
-    logout,
-    refreshProfile,
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    subtotal,
+    deliveryCharge: items.length ? DELIVERY_CHARGE : 0,
+    total,
+    itemCount,
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <CartContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </CartContext.Provider>
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
+export function useCart() {
+  const ctx = useContext(CartContext);
 
   if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error(
+      "useCart must be used within CartProvider"
+    );
   }
 
   return ctx;
