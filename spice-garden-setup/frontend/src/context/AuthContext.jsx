@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext(null);
+
 const STORAGE_KEY = "sg_cart";
 
 export const DELIVERY_CHARGE = 40;
@@ -8,7 +9,14 @@ export const DELIVERY_CHARGE = 40;
 function loadCart() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -17,16 +25,25 @@ function loadCart() {
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadCart);
 
-  // Save cart whenever it changes
+  // Save cart whenever items change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // Ignore localStorage errors
+    }
   }, [items]);
 
   // Clear cart immediately when user logs out
   useEffect(() => {
     function handleLogout() {
       setItems([]);
-      localStorage.removeItem(STORAGE_KEY);
+
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore localStorage errors
+      }
     }
 
     window.addEventListener("sg_logout", handleLogout);
@@ -38,13 +55,18 @@ export function CartProvider({ children }) {
 
   function addItem(menuItem, quantity = 1) {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === menuItem.id);
+      const existing = prev.find(
+        (item) => item.id === menuItem.id
+      );
 
       if (existing) {
-        return prev.map((i) =>
-          i.id === menuItem.id
-            ? { ...i, quantity: i.quantity + quantity }
-            : i
+        return prev.map((item) =>
+          item.id === menuItem.id
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+              }
+            : item
         );
       }
 
@@ -63,7 +85,9 @@ export function CartProvider({ children }) {
   }
 
   function removeItem(id) {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) =>
+      prev.filter((item) => item.id !== id)
+    );
   }
 
   function updateQuantity(id, quantity) {
@@ -73,28 +97,44 @@ export function CartProvider({ children }) {
     }
 
     setItems((prev) =>
-      prev.map((i) =>
-        i.id === id ? { ...i, quantity } : i
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity,
+            }
+          : item
       )
     );
   }
 
   function clearCart() {
     setItems([]);
-    localStorage.removeItem(STORAGE_KEY);
+
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
   }
 
   const subtotal = items.reduce(
-    (sum, i) => sum + i.price * i.quantity,
+    (sum, item) =>
+      sum + Number(item.price) * Number(item.quantity),
     0
   );
+
+  const deliveryCharge = items.length
+    ? DELIVERY_CHARGE
+    : 0;
 
   const total = items.length
     ? subtotal + DELIVERY_CHARGE
     : 0;
 
   const itemCount = items.reduce(
-    (sum, i) => sum + i.quantity,
+    (sum, item) =>
+      sum + Number(item.quantity),
     0
   );
 
@@ -105,7 +145,7 @@ export function CartProvider({ children }) {
     updateQuantity,
     clearCart,
     subtotal,
-    deliveryCharge: items.length ? DELIVERY_CHARGE : 0,
+    deliveryCharge,
     total,
     itemCount,
   };
