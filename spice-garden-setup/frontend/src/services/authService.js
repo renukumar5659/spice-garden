@@ -6,15 +6,41 @@ export async function register(payload) {
 }
 
 export async function login(email, password) {
-  const { data } = await api.post("/auth/login/", { email, password });
-  setTokens({ access: data.access, refresh: data.refresh });
+  const { data } = await api.post("/auth/login/", {
+    email,
+    password,
+  });
+
+  setTokens({
+    access: data.access,
+    refresh: data.refresh,
+  });
+
+  return data.user;
+}
+
+export async function googleLogin(credential) {
+  const { data } = await api.post("/auth/google/", {
+    credential,
+  });
+
+  setTokens({
+    access: data.access,
+    refresh: data.refresh,
+  });
+
   return data.user;
 }
 
 export async function logout() {
   const refresh = localStorage.getItem("sg_refresh");
+
   try {
-    if (refresh) await api.post("/auth/logout/", { refresh });
+    if (refresh) {
+      await api.post("/auth/logout/", {
+        refresh,
+      });
+    }
   } finally {
     clearTokens();
   }
