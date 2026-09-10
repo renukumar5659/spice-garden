@@ -1,169 +1,78 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import * as authService from "../services/authService";
 
-const CartContext = createContext(null);
+const AuthContext = createContext(null);
 
-const STORAGE_KEY = "sg_cart";
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-export const DELIVERY_CHARGE = 40;
-
-function loadCart() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function CartProvider({ children }) {
-  const [items, setItems] = useState(loadCart);
-
-  // Save cart whenever items change
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, [items]);
+    const hasToken = localStorage.getItem("sg_access");
 
-  // Clear cart immediately when user logs out
-  useEffect(() => {
-    function handleLogout() {
-      setItems([]);
-
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // Ignore localStorage errors
-      }
-    }
-
-    window.addEventListener("sg_logout", handleLogout);
-
-    return () => {
-      window.removeEventListener("sg_logout", handleLogout);
-    };
-  }, []);
-
-  function addItem(menuItem, quantity = 1) {
-    setItems((prev) => {
-      const existing = prev.find(
-        (item) => item.id === menuItem.id
-      );
-
-      if (existing) {
-        return prev.map((item) =>
-          item.id === menuItem.id
-            ? {
-                ...item,
-                quantity: item.quantity + quantity,
-              }
-            : item
-        );
-      }
-
-      return [
-        ...prev,
-        {
-          id: menuItem.id,
-          name: menuItem.name,
-          price: Number(menuItem.price),
-          image: menuItem.image,
-          is_veg: menuItem.is_veg,
-          quantity,
-        },
-      ];
-    });
-  }
-
-  function removeItem(id) {
-    setItems((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
-  }
-
-  function updateQuantity(id, quantity) {
-    if (quantity < 1) {
-      removeItem(id);
+    if (!hasToken) {
+      setLoading(false);
       return;
     }
 
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity,
-            }
-          : item
-      )
-    );
+    authService
+      .fetchProfile()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function login(email, password) {
+    const loggedInUser = await authService.login(email, password);
+    setUser(loggedInUser);
+    return loggedInUser;
   }
 
-  function clearCart() {
-    setItems([]);
-
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Ignore localStorage errors
-    }
+  async function register(payload) {
+    return authService.register(payload);
   }
 
-  const subtotal = items.reduce(
-    (sum, item) =>
-      sum + Number(item.price) * Number(item.quantity),
-    0
-  );
+  async function logout() {
+    await authService.logout();
 
-  const deliveryCharge = items.length
-    ? DELIVERY_CHARGE
-    : 0;
+    // Clear cart when user logs out
+    localStorage.removeItem("sg_cart");
 
-  const total = items.length
-    ? subtotal + DELIVERY_CHARGE
-    : 0;
+    // Tell CartContext to clear its state immediately
+    window.dispatchEvent(new Event("sg_logout"));
 
-  const itemCount = items.reduce(
-    (sum, item) =>
-      sum + Number(item.quantity),
-    0
-  );
+    setUser(null);
+  }
+
+  async function refreshProfile() {
+    const profile = await authService.fetchProfile();
+    setUser(profile);
+    return profile;
+  }
 
   const value = {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    subtotal,
-    deliveryCharge,
-    total,
-    itemCount,
+    user,
+    loading,
+    isAuthenticated: !!user,
+    isAdmin: !!user?.is_staff,
+    login,
+    register,
+    logout,
+    refreshProfile,
   };
 
   return (
-    <CartContext.Provider value={value}>
+    <AuthContext.Provider value={value}>
       {children}
-    </CartContext.Provider>
+    </AuthContext.Provider>
   );
 }
 
-export function useCart() {
-  const ctx = useContext(CartContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
 
   if (!ctx) {
-    throw new Error(
-      "useCart must be used within CartProvider"
-    );
+    throw new Error("useAuth must be used within AuthProvider");
   }
 
   return ctx;
