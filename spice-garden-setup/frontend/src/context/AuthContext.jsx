@@ -9,10 +9,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const hasToken = localStorage.getItem("sg_access");
+
     if (!hasToken) {
       setLoading(false);
       return;
     }
+
     authService
       .fetchProfile()
       .then(setUser)
@@ -32,6 +34,13 @@ export function AuthProvider({ children }) {
 
   async function logout() {
     await authService.logout();
+
+    // Clear the shopping cart when the user logs out
+    localStorage.removeItem("sg_cart");
+
+    // Tell CartContext that logout happened
+    window.dispatchEvent(new Event("sg_logout"));
+
     setUser(null);
   }
 
@@ -52,11 +61,19 @@ export function AuthProvider({ children }) {
     refreshProfile,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+
+  if (!ctx) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
   return ctx;
 }
