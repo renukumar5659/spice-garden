@@ -39,6 +39,7 @@ export default function Login() {
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: handleGoogleCredential,
+        use_fedcm_for_button: true,
       });
 
       googleButtonRef.current.innerHTML = "";
