@@ -36,23 +36,28 @@ export default function Login() {
         return;
       }
 
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleCredential,
-      });
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredential,
+        });
 
-      googleButtonRef.current.innerHTML = "";
+        googleButtonRef.current.innerHTML = "";
 
-      window.google.accounts.id.renderButton(
-        googleButtonRef.current,
-        {
-          theme: "outline",
-          size: "large",
-          width: 320,
-          text: "signin_with",
-          shape: "rectangular",
-        }
-      );
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          {
+            theme: "outline",
+            size: "large",
+            width: 320,
+            text: "signin_with",
+            shape: "rectangular",
+          }
+        );
+      } catch (err) {
+        console.error("Google Sign-In error:", err);
+        setError("Google Sign-In could not be loaded.");
+      }
     }
 
     function loadGoogleScript() {
@@ -66,7 +71,9 @@ export default function Login() {
       );
 
       if (existingScript) {
-        existingScript.addEventListener("load", renderGoogleButton);
+        existingScript.addEventListener("load", renderGoogleButton, {
+          once: true,
+        });
         return;
       }
 
@@ -77,6 +84,10 @@ export default function Login() {
       script.defer = true;
 
       script.onload = renderGoogleButton;
+
+      script.onerror = () => {
+        setError("Unable to load Google Sign-In.");
+      };
 
       document.head.appendChild(script);
     }
@@ -100,15 +111,15 @@ export default function Login() {
     try {
       const user = await authService.googleLogin(response.credential);
 
-      navigate(user.is_staff ? "/admin" : from, {
-        replace: true,
-      });
+      window.location.href = user.is_staff ? "/admin" : from;
     } catch (err) {
+      console.error("Google login error:", err);
+
       setError(
         err.response?.data?.detail ||
           "Google Sign-In failed. Please try again."
       );
-    } finally {
+
       setSubmitting(false);
     }
   }
@@ -130,7 +141,7 @@ export default function Login() {
         err.response?.data?.detail ||
           "Invalid email or password."
       );
-    } finally {
+
       setSubmitting(false);
     }
   }
@@ -172,6 +183,18 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+        </div>
+
+        <div
+          style={{
+            textAlign: "right",
+            marginTop: "-8px",
+            marginBottom: "16px",
+          }}
+        >
+          <Link to="/forgot-password">
+            Forgot Password?
+          </Link>
         </div>
 
         <button

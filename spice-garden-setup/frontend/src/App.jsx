@@ -1,7 +1,9 @@
 import { Route, Routes } from "react-router-dom";
+
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -11,6 +13,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Contact from "./pages/Contact";
 import FoodDetail from "./pages/FoodDetail";
+import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Menu from "./pages/Menu";
@@ -33,33 +36,141 @@ export default function App() {
       <CartProvider>
         <ToastProvider>
           <Navbar />
+
           <main>
             <Routes>
+              {/* Public pages */}
               <Route path="/" element={<Home />} />
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/menu/:id" element={<FoodDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
 
-              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-              <Route path="/order-confirmation/:id" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
-              <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-              <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route
+                path="/menu"
+                element={<Menu />}
+              />
 
-              <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="menu" element={<AdminMenu />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="customers" element={<AdminCustomers />} />
+              <Route
+                path="/menu/:id"
+                element={<FoodDetail />}
+              />
+
+              <Route
+                path="/cart"
+                element={<Cart />}
+              />
+
+              <Route
+                path="/about"
+                element={<About />}
+              />
+
+              <Route
+                path="/contact"
+                element={<Contact />}
+              />
+
+              {/* Authentication */}
+              <Route
+                path="/login"
+                element={<Login />}
+              />
+
+              <Route
+                path="/register"
+                element={<Register />}
+              />
+
+              {/* OTP Password Reset */}
+              <Route
+                path="/forgot-password"
+                element={<ForgotPassword />}
+              />
+
+              {/* Protected checkout */}
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Order confirmation */}
+              <Route
+                path="/order-confirmation/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrderConfirmation />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Orders */}
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/orders/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrderDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Profile */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route
+                  index
+                  element={<AdminDashboard />}
+                />
+
+                <Route
+                  path="menu"
+                  element={<AdminMenu />}
+                />
+
+                <Route
+                  path="orders"
+                  element={<AdminOrders />}
+                />
+
+                <Route
+                  path="customers"
+                  element={<AdminCustomers />}
+                />
               </Route>
 
-              <Route path="*" element={<NotFound />} />
+              {/* 404 */}
+              <Route
+                path="*"
+                element={<NotFound />}
+              />
             </Routes>
           </main>
+
           <Footer />
         </ToastProvider>
       </CartProvider>

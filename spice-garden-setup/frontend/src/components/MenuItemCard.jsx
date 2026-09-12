@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
+
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
-import SpiceMeter from "./SpiceMeter";
-import VegBadge from "./VegBadge";
 
 const API_ORIGIN =
   import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
@@ -41,6 +40,7 @@ export default function MenuItemCard({ item }) {
       to={`/menu/${item.id}`}
       className="menu-card card"
     >
+      {/* Food Image */}
       <div className="menu-card-image">
         {imageUrl ? (
           <img
@@ -56,18 +56,15 @@ export default function MenuItemCard({ item }) {
         )}
       </div>
 
+      {/* Food Details */}
       <div className="menu-card-body">
-        <div className="menu-card-top">
-          <VegBadge isVeg={item.is_veg} />
-          <SpiceMeter level={item.spice_level} />
-        </div>
-
         <h3>{item.name}</h3>
 
         <p className="menu-card-desc">
           {item.description || ""}
         </p>
 
+        {/* Price + Add to Cart */}
         <div className="menu-card-footer">
           <span className="menu-card-price">
             ₹{Number(item.price).toFixed(0)}

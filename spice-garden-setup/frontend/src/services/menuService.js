@@ -6,8 +6,35 @@ export async function fetchCategories() {
 }
 
 export async function fetchMenuItems(params = {}) {
-  const { data } = await api.get("/menu/", { params });
-  return data.results ?? data;
+  let page = 1;
+  let allItems = [];
+
+  while (true) {
+    const { data } = await api.get("/menu/", {
+      params: {
+        ...params,
+        page,
+      },
+    });
+
+    // If API returns a normal array instead of paginated data
+    if (Array.isArray(data)) {
+      return [...allItems, ...data];
+    }
+
+    // Add current page items
+    const items = data.results ?? [];
+    allItems = [...allItems, ...items];
+
+    // Stop when there are no more pages
+    if (!data.next) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return allItems;
 }
 
 export async function fetchMenuItem(id) {
@@ -21,7 +48,7 @@ export async function createMenuItem(payload) {
 }
 
 export async function updateMenuItem(id, payload) {
-  const { data } = await api.put(`/menu/${id}/`, payload);
+  const { data } = await api.patch(`/menu/${id}/`, payload);
   return data;
 }
 
