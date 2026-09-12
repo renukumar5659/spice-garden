@@ -15,12 +15,25 @@ class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuItem
         fields = [
-            "id", "category", "category_name", "name", "description", "ingredients",
-            "price", "image", "is_veg", "spice_level", "available", "created_at",
+            "id",
+            "category",
+            "category_name",
+            "name",
+            "description",
+            "ingredients",
+            "price",
+            "image",
+            "is_veg",
+            "food_type",
+            "spice_level",
+            "available",
+            "created_at",
         ]
         read_only_fields = ["id", "created_at"]
 
     def validate_price(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Price must be greater than zero.")
+            raise serializers.ValidationError(
+                "Price must be greater than zero."
+            )
         return value
