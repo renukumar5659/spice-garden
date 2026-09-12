@@ -1,9 +1,10 @@
+import requests
+from django.conf import settings
 from datetime import timedelta
 import secrets
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.utils import timezone
 
 from google.auth.transport import requests as google_requests
@@ -301,13 +302,25 @@ class ForgotPasswordView(APIView):
         )
 
         try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": (
+                        f"Bearer {settings.RESEND_API_KEY}"
+                    ),
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": "onboarding@resend.dev",
+                    "to": [user.email],
+                    "subject": subject,
+                    "text": message,
+                },
+                timeout=30,
             )
+
+            if not response.ok:
+                raise Exception(response.text)
 
         except Exception as exc:
             print("Password reset OTP email error:", exc)

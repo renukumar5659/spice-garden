@@ -101,7 +101,11 @@ EMAIL_HOST = config(
     "EMAIL_HOST",
     default="smtp.gmail.com",
 )
+RESEND_API_KEY = config(
+    "RESEND_API_KEY",
+    default="",
 
+)
 EMAIL_PORT = config(
     "EMAIL_PORT",
     default=587,
@@ -144,9 +148,9 @@ INSTALLED_APPS = [
 
     # Third party
     "rest_framework",
-    "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
-    "corsheaders",
+    "rest_framework_simple-jwt",
+    "rest_framework_simple-jwt.token_blacklist",
+    "cors-headers",
 
     # Local apps
     "users",
@@ -168,7 +172,7 @@ MIDDLEWARE = [
 
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-    "corsheaders.middleware.CorsMiddleware",
+    "cors-headers.middleware.CorsMiddleware",
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -322,7 +326,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework_simple-jwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
