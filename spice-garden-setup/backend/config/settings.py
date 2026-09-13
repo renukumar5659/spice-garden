@@ -139,8 +139,8 @@ DEFAULT_FROM_EMAIL = config(
 # ============================================================
 # Third party
 "rest_framework",
-"rest_framework_simple-jwt",
-"rest_framework_simple-jwt.token_blacklist",
+"rest_framework_simplejwt",
+"rest_framework_simplejwt.token_blacklist",
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -152,8 +152,8 @@ INSTALLED_APPS = [
 
     # Third party
     "rest_framework",
-    "rest_framework_simple-jwt",
-    "rest_framework_simple-jwt.token_blacklist",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "cors-headers",
 
     # Local apps
@@ -330,7 +330,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simple-jwt.authentication.JWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
