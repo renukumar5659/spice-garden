@@ -141,7 +141,7 @@ export default function AdminMenu() {
     setForm((prev) => ({
       ...prev,
       food_type: type,
-      is_veg: type === "nonveg" ? false : true,
+      is_veg: type === "veg" || type === "sweet",
     }));
   }
 
@@ -1267,16 +1267,19 @@ export default function AdminMenu() {
                     style={{
                       padding: "3px 6px",
                       borderRadius: "999px",
-                      background: item.is_veg
-                        ? "#e8f7ed"
-                        : "#fdecec",
+                      background:
+                      (item.food_type || getFoodTypeFromItem(item)) === "nonveg"
+                        ? "#fdecec"
+                        : "#e8f7ed",
                       fontSize: "9px",
                       fontWeight: 700,
                     }}
                   >
-                    {item.is_veg
-                      ? "● Veg"
-                      : "● Non-Veg"}
+                    {(item.food_type || getFoodTypeFromItem(item)) === "sweet"
+                      ? "🍬 Sweet"
+                      : (item.food_type || getFoodTypeFromItem(item)) === "nonveg"
+                        ? "● Non-Veg"
+                        : "● Veg"}
                   </span>
 
                   <span
