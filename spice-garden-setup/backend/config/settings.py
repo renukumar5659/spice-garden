@@ -176,7 +176,7 @@ MIDDLEWARE = [
 
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-    "cors-headers.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
