@@ -137,6 +137,10 @@ DEFAULT_FROM_EMAIL = config(
 # ============================================================
 # Installed apps
 # ============================================================
+# Third party
+"rest_framework",
+"rest_framework_simple-jwt",
+"rest_framework_simple-jwt.token_blacklist",
 
 INSTALLED_APPS = [
     "django.contrib.admin",
