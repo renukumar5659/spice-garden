@@ -20,7 +20,7 @@ const checkoutModernStyles = `
 .checkout-modern .field{margin-bottom:6px}.checkout-modern .field label{display:block;margin-bottom:3px;font-size:9px;font-weight:800;color:#4a382e}.checkout-modern .field input,.checkout-modern .field textarea,.checkout-modern .field select{width:100%;box-sizing:border-box;min-height:32px;padding:6px 9px;border:1px solid #dfd3c9;border-radius:7px;font-size:10px;line-height:1.2;background:#fff;color:#33271f}.checkout-modern .field input:focus,.checkout-modern .field textarea:focus{outline:none;border-color:#a86543;box-shadow:0 0 0 2px rgba(168,101,67,.10)}.checkout-modern .field textarea{min-height:48px;height:48px;resize:none}.checkout-modern .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.checkout-modern .field-error{margin:2px 0 0;font-size:8px;color:#aa3027}.checkout-modern .field-hint{margin:2px 0 0;font-size:8px;color:#7b7069}
 .location-actions{display:flex;gap:7px;align-items:center;margin:0 0 6px}.current-location-btn{border:1px solid #d8b59e;background:#fff6ed;color:#833b20;border-radius:7px;padding:6px 9px;font-size:9px;font-weight:900;cursor:pointer;white-space:nowrap}.current-location-btn:hover{background:#ffeedf}.current-location-btn:disabled{opacity:.65;cursor:wait}.location-status{font-size:8px;color:#5f6f5f}.location-status.error{color:#a52b24}.location-card{margin:0 0 6px;padding:6px 8px;border:1px solid rgba(47,125,50,.18);border-radius:7px;background:#f3faf2;font-size:8px;line-height:1.3;color:#51463f}.location-card strong{display:inline;margin-right:5px;color:#2f6d32}.delivery-fields{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(140px,.65fr);gap:8px}
 .checkout-modern .btn-block{width:100%;min-height:38px;margin-top:4px;border-radius:8px;font-size:11px;font-weight:900}.secure-note{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;font-size:8px;color:#766b63}.form-error-banner{margin-bottom:7px;padding:7px 9px;border:1px solid rgba(165,43,36,.18);border-radius:7px;background:#fff1ef;color:#9b2c25;font-size:9px;line-height:1.3}
-.checkout-modern .checkout-receipt-modern{position:sticky;top:8px;padding:11px;overflow:hidden}.checkout-modern .checkout-receipt-modern:before{content:"";display:block;height:3px;margin:-11px -11px 9px;background:linear-gradient(90deg,#8f321f,#c4773d,#e6b27b)}.summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}.summary-header h3{margin:0;font-size:15px;color:#2d211b}.summary-count{font-size:8px;font-weight:900;padding:4px 6px;border-radius:999px;background:#f7eadc;color:#80502e}.summary-items{max-height:190px;overflow:auto;padding-right:2px}.summary-item{display:flex;align-items:flex-start;justify-content:space-between;gap:7px;padding:6px 0;border-bottom:1px solid rgba(86,54,35,.09)}.summary-item-info{min-width:0}.summary-item-name{font-size:9px;font-weight:800;line-height:1.25}.summary-item-meta{margin-top:1px;font-size:8px;color:#7b7069}.summary-item-price{white-space:nowrap;font-size:9px;font-weight:900}.summary-totals{margin-top:3px}.checkout-modern .checkout-receipt-modern .summary-line{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;font-size:9px;border-bottom:1px solid rgba(86,54,35,.08)}.checkout-modern .checkout-receipt-modern .summary-line.total{padding-top:7px;border-bottom:0;font-size:16px;font-weight:900;color:#9b2c25}.delivery-note{margin-top:7px;padding:7px 8px;border-radius:7px;background:#f8f3ec;font-size:8px;line-height:1.3;color:#71665e}.payment-method{margin-top:7px;padding:7px 8px;border:1px solid rgba(139,69,19,.15);border-radius:7px;background:#fff8ef}.payment-method strong{font-size:9px}.payment-method p{margin:2px 0 0;font-size:8px;line-height:1.25;color:#766b63}.checkout-badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.checkout-badge{padding:4px 5px;border:1px solid rgba(86,54,35,.11);border-radius:5px;background:#fff;font-size:8px;color:#6f625b}
+.checkout-modern .checkout-receipt-modern{position:sticky;top:8px;padding:11px;overflow:hidden}.checkout-modern .checkout-receipt-modern:before{content:"";display:block;height:3px;margin:-11px -11px 9px;background:linear-gradient(90deg,#8f321f,#c4773d,#e6b27b)}.summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}.summary-header h3{margin:0;font-size:15px;color:#2d211b}.summary-count{font-size:8px;font-weight:900;padding:4px 6px;border-radius:999px;background:#f7eadc;color:#80502e}.summary-items{max-height:190px;overflow:auto;padding-right:2px}.summary-item{display:flex;align-items:flex-start;justify-content:space-between;gap:7px;padding:6px 0;border-bottom:1px solid rgba(86,54,35,.09)}.summary-item-info{min-width:0}.summary-item-name{font-size:9px;font-weight:800;line-height:1.25}.summary-item-meta{margin-top:1px;font-size:8px;color:#7b7069}.summary-item-price{white-space:nowrap;font-size:9px;font-weight:900}.summary-totals{margin-top:3px}.checkout-modern .checkout-receipt-modern .summary-line{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;font-size:9px;border-bottom:1px solid rgba(86,54,35,.08)}.checkout-modern .checkout-receipt-modern .summary-line.total{padding-top:7px;border-bottom:0;font-size:16px;font-weight:900;color:#9b2c25}.delivery-note{margin-top:7px;padding:7px 8px;border-radius:7px;background:#f8f3ec;font-size:8px;line-height:1.3;color:#71665e}.checkout-payment-action{margin-top:9px}.checkout-payment-action .btn-block{margin-top:0}.payment-method{margin-top:7px;padding:7px 8px;border:1px solid rgba(139,69,19,.15);border-radius:7px;background:#fff8ef}.payment-method strong{font-size:9px}.payment-method p{margin:2px 0 0;font-size:8px;line-height:1.25;color:#766b63}.checkout-badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.checkout-badge{padding:4px 5px;border:1px solid rgba(86,54,35,.11);border-radius:5px;background:#fff;font-size:8px;color:#6f625b}
 @media(max-width:900px){.checkout-modern{padding:12px 10px 20px}.checkout-modern .checkout-layout{grid-template-columns:1fr}.checkout-modern .checkout-receipt-modern{position:static}.summary-items{max-height:none}}
 @media(max-width:700px){.checkout-steps{grid-template-columns:1fr}.checkout-modern .field-row,.delivery-fields{grid-template-columns:1fr;gap:0}.checkout-page-title h1{font-size:21px}.location-actions{align-items:stretch;flex-direction:column}.current-location-btn{width:100%}}
 `;
@@ -494,7 +494,7 @@ export default function Checkout() {
       </div>
 
       <div className="checkout-layout">
-        <form className="card checkout-form checkout-form-modern" onSubmit={handleSubmit}>
+        <form id="checkout-form" className="card checkout-form checkout-form-modern" onSubmit={handleSubmit}>
           {formError && (
             <div className="form-error-banner">{formError}</div>
           )}
@@ -677,15 +677,6 @@ export default function Checkout() {
           </div>
           </section>
 
-          <button
-            className="btn btn-primary btn-block"
-            disabled={submitting}
-          >
-            {submitting
-              ? "Opening Payment…"
-              : `Pay with Razorpay — ₹${total.toFixed(0)}`}
-          </button>
-          <div className="secure-note">🔒 Secure payment powered by Razorpay</div>
         </form>
 
         <div className="card checkout-receipt-modern">
@@ -734,6 +725,22 @@ export default function Checkout() {
 
           <div className="delivery-note">
             Delivery charge is calculated by your current cart and checkout settings. Your final payable amount is shown above.
+          </div>
+
+          <div className="checkout-payment-action">
+            <button
+              type="submit"
+              form="checkout-form"
+              className="btn btn-primary btn-block"
+              disabled={submitting}
+            >
+              {submitting
+                ? "Opening Payment…"
+                : `Pay with Razorpay — ₹${total.toFixed(0)}`}
+            </button>
+            <div className="secure-note">
+              🔒 Secure payment powered by Razorpay
+            </div>
           </div>
         </div>
       </div>
