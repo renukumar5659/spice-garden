@@ -18,12 +18,15 @@ export default function ResetPassword() {
     setMessage("");
     setError("");
 
-    if (password.length < 8) {
+    const cleanPassword = password.trim();
+    const cleanConfirmPassword = confirmPassword.trim();
+
+    if (cleanPassword.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       setError("Passwords do not match.");
       return;
     }
@@ -34,7 +37,7 @@ export default function ResetPassword() {
       await authService.resetPassword(
         uid,
         token,
-        password
+        cleanPassword
       );
 
       setMessage(
