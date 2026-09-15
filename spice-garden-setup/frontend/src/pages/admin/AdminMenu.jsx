@@ -641,14 +641,24 @@ export default function AdminMenu() {
               All Categories
             </option>
 
-            {categories.map((category) => (
-              <option
-                key={category.id}
-                value={category.id}
-              >
-                {category.name}
-              </option>
-            ))}
+           {categories.map((category) => (
+  <option
+    key={category.id}
+    value={category.id}
+  >
+    {category.name}
+  </option>
+))}
+
+{!categories.some(
+  (category) =>
+    String(category.name).toLowerCase() === "desserts"
+) && (
+  <option value="10">
+    Desserts
+  </option>
+)}
+          
           </select>
 
           <select

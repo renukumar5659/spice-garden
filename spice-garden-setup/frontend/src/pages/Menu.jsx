@@ -208,26 +208,28 @@ export default function Menu() {
           }`}
           onClick={() => handleCategory("all")}
         >
-          All Categories
-        </button>
-
-        {categories.map((category) => (
-          <button
-            type="button"
-            key={category.id}
-            className={`category-tab ${
-              activeCategory === category.id
-                ? "active"
-                : ""
-            }`}
-            onClick={() => handleCategory(category.id)}
-          >
-            {category.name}
-          </button>
-        ))}
-
-      </div>
-
+         {[
+  ...categories,
+  ...(categories.some(
+    (category) =>
+      String(category.name).toLowerCase() === "desserts"
+  )
+    ? []
+    : [{ id: 10, name: "Desserts" }]),
+].map((category) => (
+  <button
+    type="button"
+    key={category.id}
+    className={`category-tab ${
+      activeCategory === category.id
+        ? "active"
+        : ""
+    }`}
+    onClick={() => handleCategory(category.id)}
+  >
+    {category.name}
+  </button>
+))}
       {/* =========================
           MENU RESULTS
       ========================= */}
