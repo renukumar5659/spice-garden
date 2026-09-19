@@ -1,41 +1,19 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 
 
 urlpatterns = [
-    # Django Admin
-    path(
-        "admin/",
-        admin.site.urls,
-    ),
+    path("admin/", admin.site.urls),
 
-    # Authentication / Users
-    path(
-        "api/auth/",
-        include("users.urls"),
-    ),
+    # Authentication
+    path("api/auth/", include("users.urls")),
 
     # Orders
-    path(
-        "api/orders/",
-        include("orders.urls"),
-    ),
+    path("api/orders/", include("orders.urls")),
 
-    # Menu
-    path(
-        "api/menu/",
-        include("menu.urls"),
-    ),
-
-    # Categories
-    path(
-        "api/categories/",
-        include("menu.category_urls"),
-    ),
+    # Menu + Categories
+    path("api/", include("menu.urls")),
 
     # Reviews
-    path(
-        "api/reviews/",
-        include("reviews.urls"),
-    ),
+    path("api/reviews/", include("reviews.urls")),
 ]

@@ -7,7 +7,7 @@ from .serializers import CategorySerializer, MenuItemSerializer
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
-    Anyone can read the menu.
+    Anyone can read the menu and categories.
     Only authenticated staff users can create, update, or delete.
     """
 
@@ -29,17 +29,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class MenuItemViewSet(viewsets.ModelViewSet):
-    """
-    Full CRUD for menu items.
-
-    Supports:
-    /api/menu/?category=<id>
-    /api/menu/?veg=true
-    /api/menu/?search=paneer
-
-    Also accepts image uploads using multipart/form-data.
-    """
-
     serializer_class = MenuItemSerializer
     permission_classes = [IsAdminOrReadOnly]
     parser_classes = [MultiPartParser, FormParser]
@@ -55,15 +44,22 @@ class MenuItemViewSet(viewsets.ModelViewSet):
             qs = qs.filter(available=True)
 
         category = self.request.query_params.get("category")
+
         if category:
             qs = qs.filter(category_id=category)
 
         veg = self.request.query_params.get("veg")
+
         if veg is not None:
-            qs = qs.filter(is_veg=(veg.lower() == "true"))
+            qs = qs.filter(
+                is_veg=(veg.lower() == "true")
+            )
 
         search = self.request.query_params.get("search")
+
         if search:
-            qs = qs.filter(name__icontains=search)
+            qs = qs.filter(
+                name__icontains=search
+            )
 
         return qs
