@@ -1,14 +1,14 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import MenuItemViewSet
+from .views import CategoryViewSet
 
 
 router = DefaultRouter()
 
 router.register(
     "",
-    MenuItemViewSet,
-    basename="menu",
+    CategoryViewSet,
+    basename="category",
 )
 
 urlpatterns = router.urls
