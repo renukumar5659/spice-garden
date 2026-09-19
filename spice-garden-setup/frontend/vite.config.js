@@ -5,13 +5,22 @@ export default defineConfig({
   plugins: [react()],
 
   server: {
-    proxy: {
-      "/api": "http://localhost:8000",
-      "/media": "http://localhost:8000",
-    },
-  },
+    port: 5173,
 
-  preview: {
-    allowedHosts: ["spice-garden-frontend.onrender.com"],
+    proxy: {
+      // API
+      "/api": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+
+      // Uploaded images
+      "/media": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

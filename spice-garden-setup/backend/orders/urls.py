@@ -1,31 +1,51 @@
 from django.urls import path
-from rest_framework.routers import DefaultRouter
 
 from .views import (
-    DashboardStatsView,
+    OrderListCreateView,
+    OrderDetailView,
     CreateRazorpayOrderView,
-    OrderStatusUpdateView,
-    OrderViewSet,
     VerifyRazorpayPaymentView,
+    OrderStatusUpdateView,
+    order_analytics,
+    order_stats,
+    order_export,
 )
 
-router = DefaultRouter()
-router.register("", OrderViewSet, basename="order")
-
-# Custom routes must come BEFORE the router's <pk>/ pattern.
 urlpatterns = [
-    path("stats/", DashboardStatsView.as_view(), name="order-stats"),
+    path(
+        "",
+        OrderListCreateView.as_view(),
+        name="order-list-create",
+    ),
+
+    path(
+        "analytics/",
+        order_analytics,
+        name="order-analytics",
+    ),
+
+    path(
+        "stats/",
+        order_stats,
+        name="order-stats",
+    ),
+
+    path(
+        "export/",
+        order_export,
+        name="order-export",
+    ),
 
     path(
         "<int:pk>/razorpay/",
         CreateRazorpayOrderView.as_view(),
-        name="razorpay-create-order",
+        name="create-razorpay-order",
     ),
 
     path(
         "<int:pk>/razorpay/verify/",
         VerifyRazorpayPaymentView.as_view(),
-        name="razorpay-verify-payment",
+        name="verify-razorpay-payment",
     ),
 
     path(
@@ -34,5 +54,9 @@ urlpatterns = [
         name="order-status-update",
     ),
 
-    *router.urls,
+    path(
+        "<int:pk>/",
+        OrderDetailView.as_view(),
+        name="order-detail",
+    ),
 ]

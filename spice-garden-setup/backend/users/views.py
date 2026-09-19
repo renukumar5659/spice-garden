@@ -1,390 +1,90 @@
-import requests
-from django.conf import settings
-from datetime import timedelta
-import secrets
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.hashers import make_password
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
-
-from rest_framework import generics, permissions, status
+from rest_framework import status, permissions
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import (
-    EmailTokenObtainPairSerializer,
-    RegisterSerializer,
-    UserSerializer,
-)
+from .serializers import UserSerializer
 
 
 User = get_user_model()
 
 
-class RegisterView(generics.CreateAPIView):
+# ============================================================
+# HELPER
+# ============================================================
+
+def get_tokens_for_user(user):
     """
-    POST /api/auth/register/
-    Create a new customer account.
-    """
-
-    permission_classes = [permissions.AllowAny]
-    serializer_class = RegisterSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        user = serializer.save()
-
-        return Response(
-            UserSerializer(user).data,
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class LoginView(TokenObtainPairView):
-    """
-    POST /api/auth/login/
-    Login using email and password.
+    Create JWT access and refresh tokens.
     """
 
-    permission_classes = [permissions.AllowAny]
-    serializer_class = EmailTokenObtainPairSerializer
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
 
 
-class GoogleLoginView(APIView):
+def user_data(user):
     """
-    POST /api/auth/google/
-    Login or register using Google.
+    Return user information for React.
     """
 
-    permission_classes = [permissions.AllowAny]
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "phone": user.phone,
+        "address": user.address,
+        "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
+        "created_at": user.created_at,
+    }
+
+
+# ============================================================
+# REGISTER
+# ============================================================
+
+class RegisterView(APIView):
+
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        credential = request.data.get("credential")
 
-        if not credential:
-            return Response(
-                {"detail": "Google credential is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        email = str(
+            request.data.get("email", "")
+        ).strip().lower()
 
-        if not settings.GOOGLE_CLIENT_ID:
-            return Response(
-                {
-                    "detail": (
-                        "Google Sign-In is not configured "
-                        "on the server."
-                    )
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        try:
-            google_user = id_token.verify_oauth2_token(
-                credential,
-                google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
-            )
-        except ValueError:
-            return Response(
-                {"detail": "Invalid Google credential."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        email = google_user.get("email")
-
-        if not email:
-            return Response(
-                {
-                    "detail": (
-                        "Google account email was not provided."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not google_user.get("email_verified"):
-            return Response(
-                {"detail": "Google email is not verified."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user = User.objects.filter(
-            email__iexact=email
-        ).first()
-
-        if not user:
-            name = (google_user.get("name") or "").strip()
-
-            first_name = (
-                google_user.get("given_name")
-                or (name.split(" ")[0] if name else "")
-            )
-
-            last_name = (
-                google_user.get("family_name")
-                or (
-                    " ".join(name.split(" ")[1:])
-                    if len(name.split(" ")) > 1
-                    else ""
-                )
-            )
-
-            user = User(
-                username=email,
-                email=email,
-                first_name=first_name,
-                last_name=last_name,
-            )
-
-            user.set_unusable_password()
-            user.save()
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": UserSerializer(user).data,
-            },
-            status=status.HTTP_200_OK,
+        password = str(
+            request.data.get("password", "")
         )
 
+        first_name = str(
+            request.data.get("first_name", "")
+        ).strip()
 
-class LogoutView(APIView):
-    """
-    POST /api/auth/logout/
-    Logout and blacklist refresh token.
-    """
+        last_name = str(
+            request.data.get("last_name", "")
+        ).strip()
 
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        refresh = request.data.get("refresh")
-
-        if not refresh:
-            return Response(
-                {"detail": "Refresh token is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            token = RefreshToken(refresh)
-            token.blacklist()
-
-        except TokenError:
-            return Response(
-                {"detail": "Invalid or expired token."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        return Response(
-            {"detail": "Logged out successfully."},
-            status=status.HTTP_205_RESET_CONTENT,
-        )
-
-
-class ProfileView(generics.RetrieveUpdateAPIView):
-    """
-    GET/PUT/PATCH /api/auth/profile/
-    View or update the logged-in customer's profile.
-    """
-
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = UserSerializer
-
-    def get_object(self):
-        return self.request.user
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=True,
-        )
-
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
-        )
-
-
-class CustomerListView(generics.ListAPIView):
-    """
-    GET /api/auth/customers/
-    Admin-only list of all customers.
-    """
-
-    permission_classes = [permissions.IsAdminUser]
-    serializer_class = UserSerializer
-
-    def get_queryset(self):
-        return User.objects.filter(
-            is_staff=False
-        ).order_by("-created_at")
-
-
-class ForgotPasswordView(APIView):
-    """
-    POST /api/auth/forgot-password/
-
-    Generate a 6-digit OTP and send it to the user's email.
-    OTP is valid for 10 minutes.
-    """
-
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get("email", "").strip()
+        username = str(
+            request.data.get("username", "")
+        ).strip()
 
         if not email:
             return Response(
                 {"detail": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user = User.objects.filter(
-            email__iexact=email
-        ).first()
-
-        # Don't reveal whether an email exists.
-        if not user:
-            return Response(
-                {
-                    "detail": (
-                        "If an account with this email exists, "
-                        "a password reset OTP has been sent."
-                    )
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        # Generate a secure 6-digit OTP.
-        otp = f"{secrets.randbelow(1000000):06d}"
-
-        user.reset_otp = otp
-        user.reset_otp_created_at = timezone.now()
-
-        user.save(
-            update_fields=[
-                "reset_otp",
-                "reset_otp_created_at",
-            ]
-        )
-
-        subject = "Spice Garden - Password Reset OTP"
-
-        message = (
-            "Hello,\n\n"
-            "We received a request to reset your "
-            "Spice Garden account password.\n\n"
-            f"Your password reset OTP is: {otp}\n\n"
-            "This OTP is valid for 10 minutes.\n\n"
-            "Do not share this OTP with anyone.\n\n"
-            "If you did not request a password reset, "
-            "you can safely ignore this email.\n\n"
-            "Thanks,\n"
-            "Spice Garden"
-        )
-
-        try:
-            response = requests.post(
-                "https://api.resend.com/emails",
-                headers={
-                    "Authorization": (
-                        f"Bearer {settings.RESEND_API_KEY}"
-                    ),
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "from": "onboarding@resend.dev",
-                    "to": [user.email],
-                    "subject": subject,
-                    "text": message,
-                },
-                timeout=30,
-            )
-
-            if not response.ok:
-                raise Exception(response.text)
-
-        except Exception as exc:
-            print("Password reset OTP email error:", exc)
-
-            # Clear OTP if email sending failed.
-            user.reset_otp = None
-            user.reset_otp_created_at = None
-
-            user.save(
-                update_fields=[
-                    "reset_otp",
-                    "reset_otp_created_at",
-                ]
-            )
-
-            return Response(
-                {
-                    "detail": (
-                        "Unable to send the password reset OTP. "
-                        "Please check the email configuration."
-                    )
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        return Response(
-            {
-                "detail": (
-                    "If an account with this email exists, "
-                    "a password reset OTP has been sent."
-                )
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-class ResetPasswordView(APIView):
-    """
-    POST /api/auth/reset-password/
-
-    Reset password using:
-    - email
-    - 6-digit OTP
-    - new password
-
-    OTP expires after 10 minutes and can only be used once.
-    """
-
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get("email", "").strip()
-        otp = request.data.get("otp", "").strip()
-        password = request.data.get("password", "")
-
-        if not email:
-            return Response(
-                {"detail": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not otp:
-            return Response(
-                {"detail": "OTP is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -394,149 +94,446 @@ class ResetPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if len(password) < 8:
+        if len(password) < 6:
             return Response(
                 {
                     "detail": (
-                        "Password must be at least 8 characters."
+                        "Password must contain at least 6 characters."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.filter(
+        if User.objects.filter(
             email__iexact=email
-        ).first()
+        ).exists():
 
-        if not user:
-            return Response(
-                {"detail": "Invalid email or OTP."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not user.reset_otp or not user.reset_otp_created_at:
             return Response(
                 {
                     "detail": (
-                        "No password reset OTP is available. "
-                        "Please request a new OTP."
+                        "An account with this email already exists."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # OTP is valid for 10 minutes.
-        otp_age = timezone.now() - user.reset_otp_created_at
+        if not username:
+            username = email.split("@")[0]
 
-        if otp_age > timedelta(minutes=10):
-            user.reset_otp = None
-            user.reset_otp_created_at = None
+        original_username = username
+        counter = 1
 
-            user.save(
-                update_fields=[
-                    "reset_otp",
-                    "reset_otp_created_at",
-                ]
-            )
+        while User.objects.filter(
+            username=username
+        ).exists():
 
+            username = f"{original_username}{counter}"
+            counter += 1
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        tokens = get_tokens_for_user(user)
+
+        return Response(
+            {
+                "message": "Registration successful.",
+                "access": tokens["access"],
+                "refresh": tokens["refresh"],
+                "user": user_data(user),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+# ============================================================
+# LOGIN
+# ============================================================
+
+class LoginView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        email = str(
+            request.data.get("email", "")
+        ).strip().lower()
+
+        password = str(
+            request.data.get("password", "")
+        )
+
+        if not email:
             return Response(
-                {
-                    "detail": (
-                        "This OTP has expired. "
-                        "Please request a new OTP."
-                    )
-                },
+                {"detail": "Email is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if otp != user.reset_otp:
+        if not password:
             return Response(
-                {"detail": "Invalid OTP."},
+                {"detail": "Password is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # OTP is correct — change the password.
-        user.set_password(password)
+        try:
+            user = User.objects.get(
+                email__iexact=email
+            )
 
-        # Make the OTP single-use.
-        user.reset_otp = None
-        user.reset_otp_created_at = None
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Invalid email or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-        user.save(
-            update_fields=[
-                "password",
-                "reset_otp",
-                "reset_otp_created_at",
-            ]
+        authenticated_user = authenticate(
+            request=request,
+            username=user.username,
+            password=password,
+        )
+
+        if authenticated_user is None:
+            return Response(
+                {"detail": "Invalid email or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not authenticated_user.is_active:
+            return Response(
+                {"detail": "This account is disabled."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        tokens = get_tokens_for_user(
+            authenticated_user
         )
 
         return Response(
             {
-                "detail": (
-                    "Your password has been reset successfully."
+                "message": "Login successful.",
+                "access": tokens["access"],
+                "refresh": tokens["refresh"],
+                "user": user_data(
+                    authenticated_user
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+# ============================================================
+# LOGOUT
+# ============================================================
+
+class LogoutView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        refresh_token = request.data.get(
+            "refresh"
+        )
+
+        if not refresh_token:
+            return Response(
+                {
+                    "detail": (
+                        "Refresh token is required."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+
+            token = RefreshToken(
+                refresh_token
+            )
+
+            token.blacklist()
+
+            return Response(
+                {
+                    "message": "Logout successful."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception:
+
+            return Response(
+                {
+                    "message": "Logout successful."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+
+# ============================================================
+# PROFILE
+# ============================================================
+
+class ProfileView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        return Response(
+            user_data(request.user),
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request):
+
+        user = request.user
+
+        first_name = request.data.get(
+            "first_name"
+        )
+
+        last_name = request.data.get(
+            "last_name"
+        )
+
+        email = request.data.get(
+            "email"
+        )
+
+        phone = request.data.get(
+            "phone"
+        )
+
+        address = request.data.get(
+            "address"
+        )
+
+        if first_name is not None:
+            user.first_name = str(
+                first_name
+            ).strip()
+
+        if last_name is not None:
+            user.last_name = str(
+                last_name
+            ).strip()
+
+        if email is not None:
+
+            email = str(
+                email
+            ).strip().lower()
+
+            if User.objects.exclude(
+                id=user.id
+            ).filter(
+                email__iexact=email
+            ).exists():
+
+                return Response(
+                    {
+                        "detail": (
+                            "This email is already in use."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.email = email
+
+        if phone is not None:
+            user.phone = str(phone).strip()
+
+        if address is not None:
+            user.address = str(address).strip()
+
+        user.save()
+
+        return Response(
+            {
+                "message": (
+                    "Profile updated successfully."
+                ),
+                "user": user_data(user),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # --------------------------------------------------------
+    # PATCH SUPPORT
+    # --------------------------------------------------------
+
+    def patch(self, request):
+        return self.put(request)
+
+
+# ============================================================
+# CUSTOMERS
+# ============================================================
+
+class CustomerListView(APIView):
+
+    permission_classes = [
+        permissions.IsAdminUser
+    ]
+
+    def get(self, request):
+
+        customers = (
+            User.objects
+            .filter(
+                is_staff=False
+            )
+            .order_by(
+                "-created_at"
+            )
+        )
+
+        serializer = UserSerializer(
+            customers,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ============================================================
+# FORGOT PASSWORD
+# ============================================================
+
+class ForgotPasswordView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        email = str(
+            request.data.get("email", "")
+        ).strip().lower()
+
+        if not email:
+            return Response(
+                {"detail": "Email is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+
+            user = User.objects.get(
+                email__iexact=email
+            )
+
+        except User.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": (
+                        "If the email exists, "
+                        "a reset link will be sent."
+                    )
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        reset_token = get_random_string(
+            64
+        )
+
+        user.set_unusable_password()
+
+        user.save()
+
+        try:
+
+            send_mail(
+                subject="Spice Garden Password Reset",
+                message=(
+                    "Your password reset request "
+                    "has been received."
+                ),
+                from_email=None,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+
+        except Exception:
+            pass
+
+        return Response(
+            {
+                "message": (
+                    "If the email exists, "
+                    "a reset link will be sent."
                 )
             },
             status=status.HTTP_200_OK,
         )
 
-class PincodeLocationView(APIView):
-    """
-    GET /api/auth/pincode/<pin>/
-    Look up an Indian PIN code on the server and return its location.
-    """
 
-    permission_classes = [permissions.AllowAny]
+# ============================================================
+# RESET PASSWORD
+# ============================================================
 
-    def get(self, request, pin):
-        import json
-        from urllib.error import HTTPError, URLError
-        from urllib.request import Request, urlopen
+class ResetPasswordView(APIView):
 
-        pin = str(pin).strip()
+    permission_classes = [AllowAny]
 
-        if not pin.isdigit() or len(pin) != 6:
+    def post(self, request):
+
+        email = str(
+            request.data.get("email", "")
+        ).strip().lower()
+
+        new_password = str(
+            request.data.get("password", "")
+        )
+
+        if not email:
             return Response(
-                {"detail": "Enter a valid 6-digit PIN code."},
+                {"detail": "Email is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        url = f"https://api.postalpincode.in/pincode/{pin}"
+        if not new_password:
+            return Response(
+                {"detail": "New password is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            req = Request(
-                url,
-                headers={"User-Agent": "Spice-Garden/1.0"},
-            )
-            with urlopen(req, timeout=8) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError, ValueError) as exc:
-            print("PIN lookup error:", exc)
-            return Response(
-                {"detail": "Unable to look up this PIN code right now."},
-                status=status.HTTP_502_BAD_GATEWAY,
+
+            user = User.objects.get(
+                email__iexact=email
             )
 
-        if (
-            not isinstance(data, list)
-            or not data
-            or data[0].get("Status") != "Success"
-            or not isinstance(data[0].get("PostOffice"), list)
-            or not data[0]["PostOffice"]
-        ):
+        except User.DoesNotExist:
+
             return Response(
-                {"detail": "Location not found for this PIN code."},
+                {"detail": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        office = data[0]["PostOffice"][0]
+        user.password = make_password(
+            new_password
+        )
+
+        user.save()
 
         return Response(
             {
-                "pin_code": pin,
-                "area": office.get("Name", ""),
-                "district": office.get("District", ""),
-                "state": office.get("State", ""),
-                "country": office.get("Country", "India"),
+                "message": (
+                    "Password reset successfully."
+                )
             },
             status=status.HTTP_200_OK,
         )

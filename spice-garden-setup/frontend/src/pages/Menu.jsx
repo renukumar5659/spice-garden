@@ -120,12 +120,25 @@ export default function Menu() {
     setActiveCategory(categoryId);
   }
 
+  // =========================
+  // CATEGORY LIST
+  // =========================
+  const displayCategories = [
+    ...categories,
+    ...(categories.some(
+      (category) =>
+        String(category.name).toLowerCase() === "desserts"
+    )
+      ? []
+      : [{ id: 10, name: "Desserts" }]),
+  ];
+
   return (
     <div className="container section-tight">
 
       {/* =========================
           PAGE HEADING
-      ========================= */}
+      ========================== */}
       <div className="section-heading">
         <span className="eyebrow">
           Our menu
@@ -138,7 +151,7 @@ export default function Menu() {
 
       {/* =========================
           SEARCH
-      ========================= */}
+      ========================== */}
       <div className="menu-toolbar">
         <input
           type="search"
@@ -151,7 +164,7 @@ export default function Menu() {
 
       {/* =========================
           FOOD TYPE FILTERS
-      ========================= */}
+      ========================== */}
       <div className="category-tabs">
 
         <button
@@ -198,9 +211,10 @@ export default function Menu() {
 
       {/* =========================
           CATEGORY FILTERS
-      ========================= */}
+      ========================== */}
       <div className="category-tabs">
 
+        {/* All Categories */}
         <button
           type="button"
           className={`category-tab ${
@@ -208,31 +222,28 @@ export default function Menu() {
           }`}
           onClick={() => handleCategory("all")}
         >
-         {[
-  ...categories,
-  ...(categories.some(
-    (category) =>
-      String(category.name).toLowerCase() === "desserts"
-  )
-    ? []
-    : [{ id: 10, name: "Desserts" }]),
-].map((category) => (
-  <button
-    type="button"
-    key={category.id}
-    className={`category-tab ${
-      activeCategory === category.id
-        ? "active"
-        : ""
-    }`}
-    onClick={() => handleCategory(category.id)}
-  >
-    {category.name}
-  </button>
-))}
+          All
+        </button>
+
+        {/* Categories */}
+        {displayCategories.map((category) => (
+          <button
+            type="button"
+            key={category.id}
+            className={`category-tab ${
+              activeCategory === category.id ? "active" : ""
+            }`}
+            onClick={() => handleCategory(category.id)}
+          >
+            {category.name}
+          </button>
+        ))}
+
+      </div>
+
       {/* =========================
           MENU RESULTS
-      ========================= */}
+      ========================== */}
       {loading ? (
         <Loading />
       ) : items.length === 0 ? (

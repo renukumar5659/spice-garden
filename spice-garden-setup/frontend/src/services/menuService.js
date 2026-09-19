@@ -1,62 +1,262 @@
 import api from "./api";
 
-export async function fetchCategories() {
-  const { data } = await api.get("/categories/");
-  return data.results ?? data;
+// ============================================================
+// FETCH CATEGORIES
+// Backend URL:
+// /api/menu/categories/
+// ============================================================
+
+export async function fetchCategories(params = {}) {
+  const { data } = await api.get(
+    "/menu/categories/",
+    {
+      params,
+    }
+  );
+
+  // Normal array
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  // DRF pagination
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  // Custom response
+  if (Array.isArray(data?.categories)) {
+    return data.categories;
+  }
+
+  console.warn(
+    "Unexpected categories API response:",
+    data
+  );
+
+  return [];
 }
+
+
+// ============================================================
+// FETCH ALL MENU ITEMS
+// Backend URL:
+// /api/menu/menu/
+// ============================================================
 
 export async function fetchMenuItems(params = {}) {
   let page = 1;
   let allItems = [];
 
   while (true) {
-    const { data } = await api.get("/menu/", {
-      params: {
-        ...params,
-        page,
-      },
-    });
+    const { data } = await api.get(
+      "/menu/menu/",
+      {
+        params: {
+          ...params,
+          page,
+        },
+      }
+    );
 
-    // If API returns a normal array instead of paginated data
+    // --------------------------------------------------------
+    // Normal array
+    // --------------------------------------------------------
+
     if (Array.isArray(data)) {
-      return [...allItems, ...data];
-    }
+      allItems = [
+        ...allItems,
+        ...data,
+      ];
 
-    // Add current page items
-    const items = data.results ?? [];
-    allItems = [...allItems, ...items];
-
-    // Stop when there are no more pages
-    if (!data.next) {
       break;
     }
 
-    page += 1;
+    // --------------------------------------------------------
+    // DRF paginated response
+    // --------------------------------------------------------
+
+    if (Array.isArray(data?.results)) {
+      allItems = [
+        ...allItems,
+        ...data.results,
+      ];
+
+      if (!data.next) {
+        break;
+      }
+
+      page += 1;
+      continue;
+    }
+
+    // --------------------------------------------------------
+    // Custom response
+    // --------------------------------------------------------
+
+    if (Array.isArray(data?.items)) {
+      allItems = [
+        ...allItems,
+        ...data.items,
+      ];
+
+      break;
+    }
+
+    if (Array.isArray(data?.menu_items)) {
+      allItems = [
+        ...allItems,
+        ...data.menu_items,
+      ];
+
+      break;
+    }
+
+    console.warn(
+      "Unexpected menu API response:",
+      data
+    );
+
+    break;
   }
 
   return allItems;
 }
 
+
+// ============================================================
+// FETCH SINGLE MENU ITEM
+// /api/menu/menu/<id>/
+// ============================================================
+
 export async function fetchMenuItem(id) {
-  const { data } = await api.get(`/menu/${id}/`);
+  if (!id) {
+    throw new Error(
+      "Menu item ID is required."
+    );
+  }
+
+  const { data } = await api.get(
+    `/menu/menu/${id}/`
+  );
+
   return data;
 }
+
+
+// ============================================================
+// CREATE MENU ITEM
+// /api/menu/menu/
+// ============================================================
 
 export async function createMenuItem(payload) {
-  const { data } = await api.post("/menu/", payload);
+  const { data } = await api.post(
+    "/menu/menu/",
+    payload
+  );
+
   return data;
 }
 
-export async function updateMenuItem(id, payload) {
-  const { data } = await api.patch(`/menu/${id}/`, payload);
+
+// ============================================================
+// UPDATE MENU ITEM
+// /api/menu/menu/<id>/
+// ============================================================
+
+export async function updateMenuItem(
+  id,
+  payload
+) {
+  if (!id) {
+    throw new Error(
+      "Menu item ID is required."
+    );
+  }
+
+  const { data } = await api.patch(
+    `/menu/menu/${id}/`,
+    payload
+  );
+
   return data;
 }
+
+
+// ============================================================
+// DELETE MENU ITEM
+// /api/menu/menu/<id>/
+// ============================================================
 
 export async function deleteMenuItem(id) {
-  await api.delete(`/menu/${id}/`);
+  if (!id) {
+    throw new Error(
+      "Menu item ID is required."
+    );
+  }
+
+  await api.delete(
+    `/menu/menu/${id}/`
+  );
+
+  return true;
 }
 
+
+// ============================================================
+// CREATE CATEGORY
+// /api/menu/categories/
+// ============================================================
+
 export async function createCategory(payload) {
-  const { data } = await api.post("/categories/", payload);
+  const { data } = await api.post(
+    "/menu/categories/",
+    payload
+  );
+
   return data;
+}
+
+
+// ============================================================
+// UPDATE CATEGORY
+// /api/menu/categories/<id>/
+// ============================================================
+
+export async function updateCategory(
+  id,
+  payload
+) {
+  if (!id) {
+    throw new Error(
+      "Category ID is required."
+    );
+  }
+
+  const { data } = await api.patch(
+    `/menu/categories/${id}/`,
+    payload
+  );
+
+  return data;
+}
+
+
+// ============================================================
+// DELETE CATEGORY
+// /api/menu/categories/<id>/
+// ============================================================
+
+export async function deleteCategory(id) {
+  if (!id) {
+    throw new Error(
+      "Category ID is required."
+    );
+  }
+
+  await api.delete(
+    `/menu/categories/${id}/`
+  );
+
+  return true;
 }

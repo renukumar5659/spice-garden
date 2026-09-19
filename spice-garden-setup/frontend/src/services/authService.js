@@ -1,4 +1,11 @@
-import api, { clearTokens, setTokens } from "./api";
+import api, {
+  clearTokens,
+  setTokens,
+} from "./api";
+
+// ============================================================
+// REGISTER
+// ============================================================
 
 export async function register(payload) {
   const { data } = await api.post(
@@ -9,7 +16,14 @@ export async function register(payload) {
   return data;
 }
 
-export async function login(email, password) {
+// ============================================================
+// LOGIN
+// ============================================================
+
+export async function login(
+  email,
+  password
+) {
   const { data } = await api.post(
     "/auth/login/",
     {
@@ -26,7 +40,13 @@ export async function login(email, password) {
   return data.user;
 }
 
-export async function googleLogin(credential) {
+// ============================================================
+// GOOGLE LOGIN
+// ============================================================
+
+export async function googleLogin(
+  credential
+) {
   const { data } = await api.post(
     "/auth/google/",
     {
@@ -42,10 +62,13 @@ export async function googleLogin(credential) {
   return data.user;
 }
 
+// ============================================================
+// LOGOUT
+// ============================================================
+
 export async function logout() {
-  const refresh = localStorage.getItem(
-    "sg_refresh"
-  );
+  const refresh =
+    localStorage.getItem("sg_refresh");
 
   try {
     if (refresh) {
@@ -56,10 +79,19 @@ export async function logout() {
         }
       );
     }
+  } catch (error) {
+    console.warn(
+      "Logout API failed. Clearing tokens.",
+      error
+    );
   } finally {
     clearTokens();
   }
 }
+
+// ============================================================
+// FETCH PROFILE
+// ============================================================
 
 export async function fetchProfile() {
   const { data } = await api.get(
@@ -69,7 +101,13 @@ export async function fetchProfile() {
   return data;
 }
 
-export async function updateProfile(payload) {
+// ============================================================
+// UPDATE PROFILE
+// ============================================================
+
+export async function updateProfile(
+  payload
+) {
   const { data } = await api.patch(
     "/auth/profile/",
     payload
@@ -78,17 +116,83 @@ export async function updateProfile(payload) {
   return data;
 }
 
-export async function fetchCustomers() {
-  const { data } = await api.get(
-    "/auth/customers/"
-  );
+// ============================================================
+// FETCH CUSTOMERS
+// ============================================================
 
-  return data;
+export async function fetchCustomers(
+  params = {}
+) {
+  const endpoints = [
+    "/auth/customers/",
+    "/users/customers/",
+    "/customers/",
+  ];
+
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const { data } = await api.get(
+        endpoint,
+        {
+          params,
+        }
+      );
+
+      if (Array.isArray(data)) {
+        return data;
+      }
+
+      if (
+        Array.isArray(data?.results)
+      ) {
+        return data.results;
+      }
+
+      if (
+        Array.isArray(data?.customers)
+      ) {
+        return data.customers;
+      }
+
+      if (
+        Array.isArray(data?.users)
+      ) {
+        return data.users;
+      }
+
+      return [];
+    } catch (error) {
+      lastError = error;
+
+      const status =
+        error?.response?.status;
+
+      /*
+       * Try the next endpoint only when
+       * the endpoint itself does not exist.
+       */
+
+      if (
+        status !== 404 &&
+        status !== 405
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
 }
 
+// ============================================================
+// FORGOT PASSWORD
+// ============================================================
 
-// Forgot Password - Send OTP
-export async function forgotPassword(email) {
+export async function forgotPassword(
+  email
+) {
   const { data } = await api.post(
     "/auth/forgot-password/",
     {
@@ -99,8 +203,10 @@ export async function forgotPassword(email) {
   return data;
 }
 
+// ============================================================
+// RESET PASSWORD
+// ============================================================
 
-// Reset Password - Verify OTP and change password
 export async function resetPassword(
   email,
   otp,

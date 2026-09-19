@@ -2,29 +2,29 @@
 Django settings for the Spice Garden Restaurant project.
 
 Local development:
-    Uses values from .env.
+    Uses values from .env
 
 Production:
     Uses environment variables supplied by the hosting platform.
 """
 
-import os
-from datetime import timedelta
 from pathlib import Path
+from datetime import timedelta
+import os
 
 import dj_database_url
 from decouple import Csv, config
 
 
 # ============================================================
-# Base
+# BASE DIRECTORY
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # ============================================================
-# Environment
+# SECURITY
 # ============================================================
 
 SECRET_KEY = config(
@@ -39,7 +39,10 @@ DEBUG = config(
 )
 
 
-# Render automatically provides RENDER_EXTERNAL_HOSTNAME.
+# ============================================================
+# ALLOWED HOSTS
+# ============================================================
+
 RENDER_EXTERNAL_HOSTNAME = os.environ.get(
     "RENDER_EXTERNAL_HOSTNAME"
 )
@@ -57,7 +60,7 @@ ALLOWED_HOSTS = config(
 
 
 # ============================================================
-# Frontend
+# FRONTEND
 # ============================================================
 
 FRONTEND_URL = config(
@@ -67,7 +70,7 @@ FRONTEND_URL = config(
 
 
 # ============================================================
-# Razorpay
+# RAZORPAY
 # ============================================================
 
 RAZORPAY_KEY_ID = config(
@@ -82,7 +85,7 @@ RAZORPAY_KEY_SECRET = config(
 
 
 # ============================================================
-# Google Sign-In
+# GOOGLE SIGN-IN
 # ============================================================
 
 GOOGLE_CLIENT_ID = config(
@@ -92,20 +95,18 @@ GOOGLE_CLIENT_ID = config(
 
 
 # ============================================================
-# Email / Password Reset
+# EMAIL / PASSWORD RESET
 # ============================================================
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+)
 
 EMAIL_HOST = config(
     "EMAIL_HOST",
     default="smtp.gmail.com",
 )
-RESEND_API_KEY = config(
-    "RESEND_API_KEY",
-    default="",
 
-)
 EMAIL_PORT = config(
     "EMAIL_PORT",
     default=587,
@@ -135,14 +136,21 @@ DEFAULT_FROM_EMAIL = config(
 
 
 # ============================================================
-# Installed apps
+# RESEND
 # ============================================================
-# Third party
-"rest_framework",
-"rest_framework_simplejwt",
-"rest_framework_simplejwt.token_blacklist",
+
+RESEND_API_KEY = config(
+    "RESEND_API_KEY",
+    default="",
+)
+
+
+# ============================================================
+# INSTALLED APPS
+# ============================================================
 
 INSTALLED_APPS = [
+    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -150,7 +158,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third party
+    # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -165,52 +173,66 @@ INSTALLED_APPS = [
 
 
 # ============================================================
-# Middleware
+# MIDDLEWARE
 # ============================================================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # Static files in production
+    # WhiteNoise
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
 
+    # CORS
     "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
     "django.contrib.messages.middleware.MessageMiddleware",
+
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 
 # ============================================================
-# URL / WSGI / ASGI
+# URL CONFIGURATION
 # ============================================================
 
 ROOT_URLCONF = "config.urls"
 
-WSGI_APPLICATION = "config.wsgi.application"
-ASGI_APPLICATION = "config.asgi.application"
-
 
 # ============================================================
-# Templates
+# TEMPLATES
 # ============================================================
 
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "BACKEND": (
+            "django.template.backends.django.DjangoTemplates"
+        ),
+
         "DIRS": [],
+
         "APP_DIRS": True,
+
         "OPTIONS": {
             "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+                (
+                    "django.template.context_processors.debug"
+                ),
+                (
+                    "django.template.context_processors.request"
+                ),
+                (
+                    "django.contrib.auth.context_processors.auth"
+                ),
+                (
+                    "django.contrib.messages.context_processors.messages"
+                ),
             ],
         },
     },
@@ -218,30 +240,40 @@ TEMPLATES = [
 
 
 # ============================================================
-# Database
+# WSGI / ASGI
 # ============================================================
 
-# Production:
-#   DATABASE_URL is supplied by Render PostgreSQL.
-#
-# Local development:
-#   Falls back to your existing DB_* variables.
+WSGI_APPLICATION = "config.wsgi.application"
+
+ASGI_APPLICATION = "config.asgi.application"
+
+
+# ============================================================
+# DATABASE
+# ============================================================
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+    # Production / Render
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
         )
     }
+
 else:
+    # Local PostgreSQL
     DATABASES = {
         "default": dj_database_url.config(
             default=(
-                f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}"
-                f"@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}"
+                f"postgresql://"
+                f"{config('DB_USER')}:"
+                f"{config('DB_PASSWORD')}"
+                f"@{config('DB_HOST')}:"
+                f"{config('DB_PORT')}/"
+                f"{config('DB_NAME')}"
             ),
             conn_max_age=600,
         )
@@ -249,10 +281,15 @@ else:
 
 
 # ============================================================
-# Authentication
+# CUSTOM USER MODEL
 # ============================================================
 
 AUTH_USER_MODEL = "users.User"
+
+
+# ============================================================
+# PASSWORD VALIDATION
+# ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -283,7 +320,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ============================================================
-# Internationalization
+# INTERNATIONALIZATION
 # ============================================================
 
 LANGUAGE_CODE = "en-us"
@@ -291,25 +328,25 @@ LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
+
 USE_TZ = True
 
 
 # ============================================================
-# Static files
+# STATIC FILES
 # ============================================================
 
 STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise compressed static files.
 STATICFILES_STORAGE = (
     "whitenoise.storage.CompressedManifestStaticFilesStorage"
 )
 
 
 # ============================================================
-# Media / Food Images
+# MEDIA FILES
 # ============================================================
 
 MEDIA_URL = "/media/"
@@ -318,26 +355,31 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ============================================================
-# Django defaults
+# DEFAULT PRIMARY KEY
 # ============================================================
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = (
+    "django.db.models.BigAutoField"
+)
 
 
 # ============================================================
-# Django REST Framework
+# DJANGO REST FRAMEWORK
 # ============================================================
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
+
     "DEFAULT_PAGINATION_CLASS": (
         "rest_framework.pagination.PageNumberPagination"
     ),
+
     "PAGE_SIZE": 20,
 }
 
@@ -354,6 +396,7 @@ SIMPLE_JWT = {
             cast=int,
         )
     ),
+
     "REFRESH_TOKEN_LIFETIME": timedelta(
         days=config(
             "REFRESH_TOKEN_LIFETIME_DAYS",
@@ -361,9 +404,14 @@ SIMPLE_JWT = {
             cast=int,
         )
     ),
+
     "ROTATE_REFRESH_TOKENS": True,
+
     "BLACKLIST_AFTER_ROTATION": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
+
+    "AUTH_HEADER_TYPES": (
+        "Bearer",
+    ),
 }
 
 
@@ -388,11 +436,13 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # ============================================================
-# Production security
+# PRODUCTION SECURITY
 # ============================================================
 
 if not DEBUG:
+
     CSRF_COOKIE_SECURE = True
+
     SESSION_COOKIE_SECURE = True
 
     SECURE_SSL_REDIRECT = True
@@ -403,7 +453,9 @@ if not DEBUG:
     )
 
     SECURE_HSTS_SECONDS = 31536000
+
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
     SECURE_HSTS_PRELOAD = True
 
     X_FRAME_OPTIONS = "DENY"

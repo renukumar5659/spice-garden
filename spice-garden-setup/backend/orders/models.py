@@ -5,10 +5,20 @@ from django.db import models
 
 from menu.models import MenuItem
 
-DELIVERY_CHARGE = 40  # flat delivery charge in INR
 
+# =========================================================
+# DELIVERY CHARGE
+# =========================================================
+
+DELIVERY_CHARGE = 40
+
+
+# =========================================================
+# ORDER MODEL
+# =========================================================
 
 class Order(models.Model):
+
     class Status(models.TextChoices):
         PLACED = "placed", "Order Placed"
         CONFIRMED = "confirmed", "Confirmed"
@@ -22,11 +32,19 @@ class Order(models.Model):
         PAID = "paid", "Paid"
         FAILED = "failed", "Payment Failed"
 
+    # -----------------------------------------------------
+    # Order ID
+    # -----------------------------------------------------
+
     order_id = models.CharField(
         max_length=20,
         unique=True,
         editable=False,
     )
+
+    # -----------------------------------------------------
+    # Customer
+    # -----------------------------------------------------
 
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -34,12 +52,33 @@ class Order(models.Model):
         related_name="orders",
     )
 
-    full_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=15)
+    # -----------------------------------------------------
+    # Customer / Delivery Details
+    # -----------------------------------------------------
+
+    full_name = models.CharField(
+        max_length=150,
+    )
+
+    phone = models.CharField(
+        max_length=15,
+    )
+
     email = models.EmailField()
+
     delivery_address = models.TextField()
-    pin_code = models.CharField(max_length=10)
-    special_instructions = models.TextField(blank=True)
+
+    pin_code = models.CharField(
+        max_length=10,
+    )
+
+    special_instructions = models.TextField(
+        blank=True,
+    )
+
+    # -----------------------------------------------------
+    # Price Details
+    # -----------------------------------------------------
 
     subtotal = models.DecimalField(
         max_digits=10,
@@ -57,18 +96,29 @@ class Order(models.Model):
         decimal_places=2,
     )
 
+    # -----------------------------------------------------
+    # Order Status
+    # -----------------------------------------------------
+
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PLACED,
     )
 
-    # Razorpay payment information
+    # -----------------------------------------------------
+    # Payment Status
+    # -----------------------------------------------------
+
     payment_status = models.CharField(
         max_length=20,
         choices=PaymentStatus.choices,
         default=PaymentStatus.PENDING,
     )
+
+    # -----------------------------------------------------
+    # Razorpay Details
+    # -----------------------------------------------------
 
     razorpay_order_id = models.CharField(
         max_length=100,
@@ -89,22 +139,55 @@ class Order(models.Model):
         null=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # -----------------------------------------------------
+    # Timestamps
+    # -----------------------------------------------------
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    # -----------------------------------------------------
+    # Meta
+    # -----------------------------------------------------
 
     class Meta:
         ordering = ["-created_at"]
 
+    # -----------------------------------------------------
+    # Save
+    # -----------------------------------------------------
+
     def save(self, *args, **kwargs):
+
         if not self.order_id:
-            self.order_id = f"SG{uuid.uuid4().hex[:8].upper()}"
+            self.order_id = (
+                f"SG{uuid.uuid4().hex[:8].upper()}"
+            )
+
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"Order {self.order_id} ({self.get_status_display()})"
+    # -----------------------------------------------------
+    # String
+    # -----------------------------------------------------
 
+    def __str__(self):
+        return (
+            f"Order {self.order_id} "
+            f"({self.get_status_display()})"
+        )
+
+
+# =========================================================
+# ORDER ITEM MODEL
+# =========================================================
 
 class OrderItem(models.Model):
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -117,7 +200,9 @@ class OrderItem(models.Model):
         related_name="order_items",
     )
 
-    quantity = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(
+        default=1,
+    )
 
     price = models.DecimalField(
         max_digits=8,
@@ -125,9 +210,20 @@ class OrderItem(models.Model):
         help_text="Price per unit at time of order.",
     )
 
+    # -----------------------------------------------------
+    # Line Total
+    # -----------------------------------------------------
+
     @property
     def line_total(self):
         return self.quantity * self.price
 
+    # -----------------------------------------------------
+    # String
+    # -----------------------------------------------------
+
     def __str__(self):
-        return f"{self.quantity} x {self.menu_item.name}"
+        return (
+            f"{self.quantity} x "
+            f"{self.menu_item.name}"
+        )

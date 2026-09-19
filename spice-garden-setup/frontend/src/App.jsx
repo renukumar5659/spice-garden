@@ -24,6 +24,8 @@ import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 
+// Admin pages
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -39,7 +41,11 @@ export default function App() {
 
           <main>
             <Routes>
-              {/* Public pages */}
+
+              {/* =========================
+                  PUBLIC PAGES
+              ========================== */}
+
               <Route path="/" element={<Home />} />
 
               <Route
@@ -67,7 +73,10 @@ export default function App() {
                 element={<Contact />}
               />
 
-              {/* Authentication */}
+              {/* =========================
+                  AUTHENTICATION
+              ========================== */}
+
               <Route
                 path="/login"
                 element={<Login />}
@@ -78,13 +87,15 @@ export default function App() {
                 element={<Register />}
               />
 
-              {/* OTP Password Reset */}
               <Route
                 path="/forgot-password"
                 element={<ForgotPassword />}
               />
 
-              {/* Protected checkout */}
+              {/* =========================
+                  PROTECTED CUSTOMER PAGES
+              ========================== */}
+
               <Route
                 path="/checkout"
                 element={
@@ -94,7 +105,6 @@ export default function App() {
                 }
               />
 
-              {/* Order confirmation */}
               <Route
                 path="/order-confirmation/:id"
                 element={
@@ -104,7 +114,6 @@ export default function App() {
                 }
               />
 
-              {/* Orders */}
               <Route
                 path="/orders"
                 element={
@@ -123,7 +132,6 @@ export default function App() {
                 }
               />
 
-              {/* Profile */}
               <Route
                 path="/profile"
                 element={
@@ -133,7 +141,10 @@ export default function App() {
                 }
               />
 
-              {/* Admin */}
+              {/* =========================
+                  ADMIN
+              ========================== */}
+
               <Route
                 path="/admin"
                 element={
@@ -142,32 +153,46 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
+                {/* Admin Dashboard */}
                 <Route
                   index
                   element={<AdminDashboard />}
                 />
 
+                {/* Menu Management */}
                 <Route
                   path="menu"
                   element={<AdminMenu />}
                 />
 
+                {/* Order Management */}
                 <Route
                   path="orders"
                   element={<AdminOrders />}
                 />
 
+                {/* Order Analytics */}
+                <Route
+                  path="analytics"
+                  element={<AdminAnalytics />}
+                />
+
+                {/* Customer Management */}
                 <Route
                   path="customers"
                   element={<AdminCustomers />}
                 />
               </Route>
 
-              {/* 404 */}
+              {/* =========================
+                  404
+              ========================== */}
+
               <Route
                 path="*"
                 element={<NotFound />}
               />
+
             </Routes>
           </main>
 
