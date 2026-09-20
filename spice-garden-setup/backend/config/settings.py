@@ -331,7 +331,6 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 
 USE_TZ = True
-
 # ============================================================
 # STATIC FILES
 # ============================================================
@@ -345,6 +344,9 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
+
+# Prevent a missing manifest entry from crashing the API
+WHITENOISE_MANIFEST_STRICT = False
 
 
 # ============================================================
