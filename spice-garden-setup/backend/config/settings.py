@@ -14,7 +14,6 @@ import os
 
 import dj_database_url
 from decouple import Csv, config
-from django.core.checks import ERROR
 
 
 # ============================================================
@@ -180,15 +179,14 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # WhiteNoise
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
 
-    # CORS
     "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
 
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -331,6 +329,8 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 
 USE_TZ = True
+
+
 # ============================================================
 # STATIC FILES
 # ============================================================
@@ -340,13 +340,13 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-# Prevent a missing manifest entry from crashing the API
-WHITENOISE_MANIFEST_STRICT = False
 
 
 # ============================================================
@@ -354,7 +354,6 @@ WHITENOISE_MANIFEST_STRICT = False
 # ============================================================
 
 MEDIA_URL = "/media/"
-
 MEDIA_ROOT = BASE_DIR / "media"
 
 
