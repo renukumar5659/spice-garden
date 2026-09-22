@@ -2,29 +2,25 @@ import api from "./api";
 
 // ============================================================
 // FETCH CATEGORIES
-// Backend URL:
-// /api/menu/categories/
+// Backend URL: /api/categories/
 // ============================================================
 
 export async function fetchCategories(params = {}) {
   const { data } = await api.get(
-    "/menu/categories/",
+    "/categories/",
     {
       params,
     }
   );
 
-  // Normal array
   if (Array.isArray(data)) {
     return data;
   }
 
-  // DRF pagination
   if (Array.isArray(data?.results)) {
     return data.results;
   }
 
-  // Custom response
   if (Array.isArray(data?.categories)) {
     return data.categories;
   }
@@ -40,8 +36,7 @@ export async function fetchCategories(params = {}) {
 
 // ============================================================
 // FETCH ALL MENU ITEMS
-// Backend URL:
-// /api/menu/menu/
+// Backend URL: /api/menu/
 // ============================================================
 
 export async function fetchMenuItems(params = {}) {
@@ -50,7 +45,7 @@ export async function fetchMenuItems(params = {}) {
 
   while (true) {
     const { data } = await api.get(
-      "/menu/menu/",
+      "/menu/",
       {
         params: {
           ...params,
@@ -59,10 +54,7 @@ export async function fetchMenuItems(params = {}) {
       }
     );
 
-    // --------------------------------------------------------
     // Normal array
-    // --------------------------------------------------------
-
     if (Array.isArray(data)) {
       allItems = [
         ...allItems,
@@ -72,10 +64,7 @@ export async function fetchMenuItems(params = {}) {
       break;
     }
 
-    // --------------------------------------------------------
-    // DRF paginated response
-    // --------------------------------------------------------
-
+    // DRF pagination
     if (Array.isArray(data?.results)) {
       allItems = [
         ...allItems,
@@ -90,10 +79,7 @@ export async function fetchMenuItems(params = {}) {
       continue;
     }
 
-    // --------------------------------------------------------
     // Custom response
-    // --------------------------------------------------------
-
     if (Array.isArray(data?.items)) {
       allItems = [
         ...allItems,
@@ -126,7 +112,7 @@ export async function fetchMenuItems(params = {}) {
 
 // ============================================================
 // FETCH SINGLE MENU ITEM
-// /api/menu/menu/<id>/
+// Backend URL: /api/menu/<id>/
 // ============================================================
 
 export async function fetchMenuItem(id) {
@@ -137,7 +123,7 @@ export async function fetchMenuItem(id) {
   }
 
   const { data } = await api.get(
-    `/menu/menu/${id}/`
+    `/menu/${id}/`
   );
 
   return data;
@@ -146,12 +132,12 @@ export async function fetchMenuItem(id) {
 
 // ============================================================
 // CREATE MENU ITEM
-// /api/menu/menu/
+// Backend URL: /api/menu/
 // ============================================================
 
 export async function createMenuItem(payload) {
   const { data } = await api.post(
-    "/menu/menu/",
+    "/menu/",
     payload
   );
 
@@ -161,7 +147,7 @@ export async function createMenuItem(payload) {
 
 // ============================================================
 // UPDATE MENU ITEM
-// /api/menu/menu/<id>/
+// Backend URL: /api/menu/<id>/
 // ============================================================
 
 export async function updateMenuItem(
@@ -175,7 +161,7 @@ export async function updateMenuItem(
   }
 
   const { data } = await api.patch(
-    `/menu/menu/${id}/`,
+    `/menu/${id}/`,
     payload
   );
 
@@ -185,7 +171,7 @@ export async function updateMenuItem(
 
 // ============================================================
 // DELETE MENU ITEM
-// /api/menu/menu/<id>/
+// Backend URL: /api/menu/<id>/
 // ============================================================
 
 export async function deleteMenuItem(id) {
@@ -196,7 +182,7 @@ export async function deleteMenuItem(id) {
   }
 
   await api.delete(
-    `/menu/menu/${id}/`
+    `/menu/${id}/`
   );
 
   return true;
@@ -205,12 +191,12 @@ export async function deleteMenuItem(id) {
 
 // ============================================================
 // CREATE CATEGORY
-// /api/menu/categories/
+// Backend URL: /api/categories/
 // ============================================================
 
 export async function createCategory(payload) {
   const { data } = await api.post(
-    "/menu/categories/",
+    "/categories/",
     payload
   );
 
@@ -220,7 +206,7 @@ export async function createCategory(payload) {
 
 // ============================================================
 // UPDATE CATEGORY
-// /api/menu/categories/<id>/
+// Backend URL: /api/categories/<id>/
 // ============================================================
 
 export async function updateCategory(
@@ -234,9 +220,8 @@ export async function updateCategory(
   }
 
   const { data } = await api.patch(
-    `/menu/categories/${id}/`,
-    payload
-  );
+    `/categories/${id}/`
+  , payload);
 
   return data;
 }
@@ -244,7 +229,7 @@ export async function updateCategory(
 
 // ============================================================
 // DELETE CATEGORY
-// /api/menu/categories/<id>/
+// Backend URL: /api/categories/<id>/
 // ============================================================
 
 export async function deleteCategory(id) {
@@ -255,7 +240,7 @@ export async function deleteCategory(id) {
   }
 
   await api.delete(
-    `/menu/categories/${id}/`
+    `/categories/${id}/`
   );
 
   return true;
