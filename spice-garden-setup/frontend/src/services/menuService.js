@@ -2,7 +2,7 @@ import api from "./api";
 
 // ============================================================
 // FETCH CATEGORIES
-// Backend URL: /api/categories/
+// Backend: /api/categories/
 // ============================================================
 
 export async function fetchCategories(params = {}) {
@@ -35,8 +35,8 @@ export async function fetchCategories(params = {}) {
 
 
 // ============================================================
-// FETCH ALL MENU ITEMS
-// Backend URL: /api/menu/
+// FETCH MENU ITEMS
+// Backend: /api/menu/
 // ============================================================
 
 export async function fetchMenuItems(params = {}) {
@@ -112,7 +112,7 @@ export async function fetchMenuItems(params = {}) {
 
 // ============================================================
 // FETCH SINGLE MENU ITEM
-// Backend URL: /api/menu/<id>/
+// Backend: /api/menu/<id>/
 // ============================================================
 
 export async function fetchMenuItem(id) {
@@ -132,7 +132,7 @@ export async function fetchMenuItem(id) {
 
 // ============================================================
 // CREATE MENU ITEM
-// Backend URL: /api/menu/
+// Backend: /api/menu/
 // ============================================================
 
 export async function createMenuItem(payload) {
@@ -147,7 +147,7 @@ export async function createMenuItem(payload) {
 
 // ============================================================
 // UPDATE MENU ITEM
-// Backend URL: /api/menu/<id>/
+// Backend: /api/menu/<id>/
 // ============================================================
 
 export async function updateMenuItem(
@@ -171,7 +171,7 @@ export async function updateMenuItem(
 
 // ============================================================
 // DELETE MENU ITEM
-// Backend URL: /api/menu/<id>/
+// Backend: /api/menu/<id>/
 // ============================================================
 
 export async function deleteMenuItem(id) {
@@ -191,7 +191,7 @@ export async function deleteMenuItem(id) {
 
 // ============================================================
 // CREATE CATEGORY
-// Backend URL: /api/categories/
+// Backend: /api/categories/
 // ============================================================
 
 export async function createCategory(payload) {
@@ -206,7 +206,7 @@ export async function createCategory(payload) {
 
 // ============================================================
 // UPDATE CATEGORY
-// Backend URL: /api/categories/<id>/
+// Backend: /api/categories/<id>/
 // ============================================================
 
 export async function updateCategory(
@@ -220,8 +220,9 @@ export async function updateCategory(
   }
 
   const { data } = await api.patch(
-    `/categories/${id}/`
-  , payload);
+    `/categories/${id}/`,
+    payload
+  );
 
   return data;
 }
@@ -229,7 +230,7 @@ export async function updateCategory(
 
 // ============================================================
 // DELETE CATEGORY
-// Backend URL: /api/categories/<id>/
+// Backend: /api/categories/<id>/
 // ============================================================
 
 export async function deleteCategory(id) {
