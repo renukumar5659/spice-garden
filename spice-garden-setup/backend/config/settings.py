@@ -77,7 +77,7 @@ for host in ENV_ALLOWED_HOSTS:
 
 FRONTEND_URL = config(
     "FRONTEND_URL",
-    default="https://spice-garden-frontend.onrender.com",
+    default="https://spice-garden-web.onrender.com",
 ).rstrip("/")
 
 
@@ -141,7 +141,7 @@ MIDDLEWARE = [
 # Keep the legacy Render frontend URL temporarily so an older
 # deployment can still communicate with the API.
 CORS_ALLOWED_ORIGINS = [
-    "https://spice-garden-1j9d.onrender.com",
+    "https://spice-garden-web.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
@@ -182,7 +182,7 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://spice-garden-1j9d.onrender.com",
+    "https://spice-garden-web.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
