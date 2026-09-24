@@ -54,9 +54,9 @@ ALLOWED_HOSTS = [
 ]
 
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Add any hosts from environment variable
 ENV_ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="",
@@ -74,7 +74,7 @@ for host in ENV_ALLOWED_HOSTS:
 
 FRONTEND_URL = config(
     "FRONTEND_URL",
-    default="https://spice-garden-frontend.onrender.com",
+    default="https://spice-garden-jl9d.onrender.com",
 ).rstrip("/")
 
 
@@ -202,17 +202,21 @@ MIDDLEWARE = [
 # CORS CONFIGURATION
 # ============================================================
 
-# Production frontend
 CORS_ALLOWED_ORIGINS = [
+    # CURRENT PRODUCTION FRONTEND
+    "https://spice-garden-jl9d.onrender.com",
+
+    # OLD FRONTEND URL - kept temporarily so old deployments
+    # do not suddenly lose access
     "https://spice-garden-frontend.onrender.com",
 
-    # Local development
+    # LOCAL DEVELOPMENT
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-# Also allow FRONTEND_URL from Render environment
-if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+# Add FRONTEND_URL from Render environment
+if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CORS_ALLOW_CREDENTIALS = True
@@ -223,14 +227,18 @@ CORS_ALLOW_CREDENTIALS = True
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
+    # CURRENT PRODUCTION FRONTEND
+    "https://spice-garden-jl9d.onrender.com",
+
+    # OLD FRONTEND URL
     "https://spice-garden-frontend.onrender.com",
 
-    # Local development
+    # LOCAL DEVELOPMENT
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 
@@ -283,6 +291,7 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
+
     # Render / Production PostgreSQL
     DATABASES = {
         "default": dj_database_url.parse(
@@ -292,6 +301,7 @@ if DATABASE_URL:
     }
 
 else:
+
     # Local PostgreSQL
     DATABASES = {
         "default": dj_database_url.config(
