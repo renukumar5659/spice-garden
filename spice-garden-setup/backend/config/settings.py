@@ -155,26 +155,6 @@ RESEND_API_KEY = config(
 
 
 # ============================================================
-# CLOUDINARY
-# ============================================================
-
-CLOUDINARY_CLOUD_NAME = config(
-    "CLOUDINARY_CLOUD_NAME",
-    default="",
-)
-
-CLOUDINARY_API_KEY = config(
-    "CLOUDINARY_API_KEY",
-    default="",
-)
-
-CLOUDINARY_API_SECRET = config(
-    "CLOUDINARY_API_SECRET",
-    default="",
-)
-
-
-# ============================================================
 # INSTALLED APPS
 # ============================================================
 
@@ -186,18 +166,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # CORS
     "corsheaders",
 
-    # REST Framework
-    "rest_framework",
-    "rest_framework_simplejwt",
-
-    # Cloudinary
     "cloudinary",
     "cloudinary_storage",
 
-    # Project apps
+    "rest_framework",
+    "rest_framework_simplejwt",
+
     "users",
     "menu",
     "orders",
@@ -211,19 +187,16 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # CORS must be before CommonMiddleware
+    # CORS MUST be before CommonMiddleware
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
-
     "django.middleware.common.CommonMiddleware",
 
     "django.middleware.csrf.CsrfViewMiddleware",
 
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
     "django.contrib.messages.middleware.MessageMiddleware",
-
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -233,15 +206,20 @@ MIDDLEWARE = [
 # ============================================================
 
 CORS_ALLOWED_ORIGINS = [
+    # CURRENT PRODUCTION FRONTEND
     "https://spice-garden-jl9d.onrender.com",
+
+    # OLD FRONTEND URL - kept temporarily so old deployments
+    # do not suddenly lose access
     "https://spice-garden-frontend.onrender.com",
 
-    # Local development
+    # LOCAL DEVELOPMENT
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+# Add FRONTEND_URL from Render environment
+if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CORS_ALLOW_CREDENTIALS = True
@@ -252,15 +230,18 @@ CORS_ALLOW_CREDENTIALS = True
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
+    # CURRENT PRODUCTION FRONTEND
     "https://spice-garden-jl9d.onrender.com",
+
+    # OLD FRONTEND URL
     "https://spice-garden-frontend.onrender.com",
 
-    # Local development
+    # LOCAL DEVELOPMENT
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 
@@ -314,7 +295,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
 
-    # Render PostgreSQL
+    # Render / Production PostgreSQL
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -393,6 +374,26 @@ USE_TZ = True
 
 
 # ============================================================
+# CLOUDINARY
+# ============================================================
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": config(
+        "CLOUDINARY_CLOUD_NAME",
+        default="",
+    ),
+    "API_KEY": config(
+        "CLOUDINARY_API_KEY",
+        default="",
+    ),
+    "API_SECRET": config(
+        "CLOUDINARY_API_SECRET",
+        default="",
+    ),
+}
+
+
+# ============================================================
 # STATIC FILES
 # ============================================================
 
@@ -414,22 +415,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # STORAGE CONFIGURATION
 # ============================================================
 
+# Uploaded files such as menu images are stored in Cloudinary.
+# Static files continue to use WhiteNoise.
 STORAGES = {
-
-    # ========================================================
-    # USER UPLOADED FILES
-    # ========================================================
-
     "default": {
         "BACKEND": (
-            "cloudinary_storage.storage."
-            "MediaCloudinaryStorage"
+            "cloudinary_storage.storage.MediaCloudinaryStorage"
         ),
     },
-
-    # ========================================================
-    # STATIC FILES
-    # ========================================================
 
     "staticfiles": {
         "BACKEND": (
@@ -441,24 +434,12 @@ STORAGES = {
 
 
 # ============================================================
-# CLOUDINARY CONFIGURATION
-# ============================================================
-
-import cloudinary
-
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET,
-    secure=True,
-)
-
-
-# ============================================================
 # DEFAULT PRIMARY KEY
 # ============================================================
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = (
+    "django.db.models.BigAutoField"
+)
 
 
 # ============================================================
@@ -466,7 +447,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ============================================================
 
 REST_FRAMEWORK = {
-
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -488,7 +468,6 @@ REST_FRAMEWORK = {
 # ============================================================
 
 SIMPLE_JWT = {
-
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=config(
             "ACCESS_TOKEN_LIFETIME_MIN",
@@ -546,7 +525,6 @@ if not DEBUG:
 # ============================================================
 
 LOGGING = {
-
     "version": 1,
 
     "disable_existing_loggers": False,
@@ -558,7 +536,6 @@ LOGGING = {
     },
 
     "loggers": {
-
         "django": {
             "handlers": ["console"],
             "level": "INFO",
@@ -569,6 +546,5 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
-
     },
 }
