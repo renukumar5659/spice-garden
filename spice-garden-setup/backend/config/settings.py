@@ -14,7 +14,6 @@ import os
 
 import dj_database_url
 from decouple import Csv, config
-from corsheaders.defaults import default_headers
 
 
 # ============================================================
@@ -55,11 +54,9 @@ ALLOWED_HOSTS = [
 ]
 
 if RENDER_EXTERNAL_HOSTNAME:
-    if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(
-            RENDER_EXTERNAL_HOSTNAME
-        )
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+# Add any hosts from environment variable
 ENV_ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="",
@@ -77,8 +74,84 @@ for host in ENV_ALLOWED_HOSTS:
 
 FRONTEND_URL = config(
     "FRONTEND_URL",
-    default="https://spice-garden-web.onrender.com",
+    default="https://spice-garden-frontend.onrender.com",
 ).rstrip("/")
+
+
+# ============================================================
+# RAZORPAY
+# ============================================================
+
+RAZORPAY_KEY_ID = config(
+    "RAZORPAY_KEY_ID",
+    default="",
+)
+
+RAZORPAY_KEY_SECRET = config(
+    "RAZORPAY_KEY_SECRET",
+    default="",
+)
+
+
+# ============================================================
+# GOOGLE SIGN-IN
+# ============================================================
+
+GOOGLE_CLIENT_ID = config(
+    "GOOGLE_CLIENT_ID",
+    default="",
+)
+
+
+# ============================================================
+# EMAIL / PASSWORD RESET
+# ============================================================
+
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+)
+
+EMAIL_HOST = config(
+    "EMAIL_HOST",
+    default="smtp.gmail.com",
+)
+
+EMAIL_PORT = config(
+    "EMAIL_PORT",
+    default=587,
+    cast=int,
+)
+
+EMAIL_USE_TLS = config(
+    "EMAIL_USE_TLS",
+    default=True,
+    cast=bool,
+)
+
+EMAIL_HOST_USER = config(
+    "EMAIL_HOST_USER",
+    default="",
+)
+
+EMAIL_HOST_PASSWORD = config(
+    "EMAIL_HOST_PASSWORD",
+    default="",
+)
+
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL",
+    default=EMAIL_HOST_USER,
+)
+
+
+# ============================================================
+# RESEND
+# ============================================================
+
+RESEND_API_KEY = config(
+    "RESEND_API_KEY",
+    default="",
+)
 
 
 # ============================================================
@@ -86,7 +159,6 @@ FRONTEND_URL = config(
 # ============================================================
 
 INSTALLED_APPS = [
-    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -94,18 +166,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # CORS
     "corsheaders",
 
-    # REST Framework
     "rest_framework",
     "rest_framework_simplejwt",
 
-    # Cloudinary
-    "cloudinary",
-    "cloudinary_storage",
-
-    # Project apps
     "users",
     "menu",
     "orders",
@@ -119,7 +184,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # CORS must be before CommonMiddleware
+    # CORS MUST be before CommonMiddleware
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -137,11 +202,8 @@ MIDDLEWARE = [
 # CORS CONFIGURATION
 # ============================================================
 
-# Explicitly allow the deployed React frontend.
-# Keep the legacy Render frontend URL temporarily so an older
-# deployment can still communicate with the API.
+# Production frontend
 CORS_ALLOWED_ORIGINS = [
-    "https://spice-garden-web.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
@@ -149,32 +211,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# Also read any origins supplied through Render.
-ENV_CORS_ALLOWED_ORIGINS = config(
-    "CORS_ALLOWED_ORIGINS",
-    default="",
-    cast=Csv(),
-)
-
-for origin in ENV_CORS_ALLOWED_ORIGINS:
-    origin = origin.strip().rstrip("/")
-    if origin and origin not in CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGINS.append(origin)
-
-# Always include FRONTEND_URL from Render.
-if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+# Also allow FRONTEND_URL from Render environment
+if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
-CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
-
-# Explicitly allow the headers used by Axios/JSON/JWT requests.
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "Authorization",
-]
-
-# Cache successful preflight responses.
-CORS_PREFLIGHT_MAX_AGE = 86400
 
 
 # ============================================================
@@ -182,7 +223,6 @@ CORS_PREFLIGHT_MAX_AGE = 86400
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://spice-garden-web.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
@@ -190,13 +230,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
-
-for origin in ENV_CORS_ALLOWED_ORIGINS:
-    origin = origin.strip().rstrip("/")
-    if origin and origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(origin)
 
 
 # ============================================================
@@ -213,11 +248,13 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": (
-            "django.template.backends."
-            "django.DjangoTemplates"
+            "django.template.backends.django.DjangoTemplates"
         ),
+
         "DIRS": [],
+
         "APP_DIRS": True,
+
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -243,9 +280,7 @@ ASGI_APPLICATION = "config.asgi.application"
 # DATABASE
 # ============================================================
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
     # Render / Production PostgreSQL
@@ -335,28 +370,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # ============================================================
-# CLOUDINARY CONFIGURATION
-# ============================================================
-
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": config(
-        "CLOUDINARY_CLOUD_NAME",
-        default="",
-    ),
-
-    "API_KEY": config(
-        "CLOUDINARY_API_KEY",
-        default="",
-    ),
-
-    "API_SECRET": config(
-        "CLOUDINARY_API_SECRET",
-        default="",
-    ),
-}
-
-
-# ============================================================
 # MEDIA FILES
 # ============================================================
 
@@ -370,15 +383,12 @@ MEDIA_ROOT = BASE_DIR / "media"
 # ============================================================
 
 STORAGES = {
-    # User uploaded files
     "default": {
         "BACKEND": (
-            "cloudinary_storage.storage."
-            "MediaCloudinaryStorage"
+            "django.core.files.storage.FileSystemStorage"
         ),
     },
 
-    # Django static files
     "staticfiles": {
         "BACKEND": (
             "whitenoise.storage."
@@ -403,18 +413,15 @@ DEFAULT_AUTO_FIELD = (
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication."
-        "JWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 
     "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions."
-        "IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
 
     "DEFAULT_PAGINATION_CLASS": (
-        "rest_framework.pagination."
-        "PageNumberPagination"
+        "rest_framework.pagination.PageNumberPagination"
     ),
 
     "PAGE_SIZE": 20,
@@ -453,92 +460,8 @@ SIMPLE_JWT = {
 
 
 # ============================================================
-# RAZORPAY
-# ============================================================
-
-RAZORPAY_KEY_ID = config(
-    "RAZORPAY_KEY_ID",
-    default="",
-)
-
-RAZORPAY_KEY_SECRET = config(
-    "RAZORPAY_KEY_SECRET",
-    default="",
-)
-
-
-# ============================================================
-# GOOGLE SIGN-IN
-# ============================================================
-
-GOOGLE_CLIENT_ID = config(
-    "GOOGLE_CLIENT_ID",
-    default="",
-)
-
-
-# ============================================================
-# EMAIL / PASSWORD RESET
-# ============================================================
-
-EMAIL_BACKEND = (
-    "django.core.mail.backends.smtp.EmailBackend"
-)
-
-EMAIL_HOST = config(
-    "EMAIL_HOST",
-    default="smtp.gmail.com",
-)
-
-EMAIL_PORT = config(
-    "EMAIL_PORT",
-    default=587,
-    cast=int,
-)
-
-EMAIL_USE_TLS = config(
-    "EMAIL_USE_TLS",
-    default=True,
-    cast=bool,
-)
-
-EMAIL_HOST_USER = config(
-    "EMAIL_HOST_USER",
-    default="",
-)
-
-EMAIL_HOST_PASSWORD = config(
-    "EMAIL_HOST_PASSWORD",
-    default="",
-)
-
-DEFAULT_FROM_EMAIL = config(
-    "DEFAULT_FROM_EMAIL",
-    default=EMAIL_HOST_USER,
-)
-
-
-# ============================================================
-# RESEND
-# ============================================================
-
-RESEND_API_KEY = config(
-    "RESEND_API_KEY",
-    default="",
-)
-
-
-# ============================================================
 # PRODUCTION SECURITY
 # ============================================================
-
-# Render terminates HTTPS at its proxy. Tell Django which forwarded
-# protocol represents the original client request so preflight/API
-# requests are not redirected unexpectedly.
-SECURE_PROXY_SSL_HEADER = (
-    "HTTP_X_FORWARDED_PROTO",
-    "https",
-)
 
 if not DEBUG:
 
@@ -547,6 +470,11 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
 
     SECURE_SSL_REDIRECT = True
+
+    SECURE_PROXY_SSL_HEADER = (
+        "HTTP_X_FORWARDED_PROTO",
+        "https",
+    )
 
     SECURE_HSTS_SECONDS = 31536000
 
