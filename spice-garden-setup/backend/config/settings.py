@@ -14,6 +14,7 @@ import os
 
 import dj_database_url
 from decouple import Csv, config
+from corsheaders.defaults import default_headers
 
 
 # ============================================================
@@ -136,7 +137,11 @@ MIDDLEWARE = [
 # CORS CONFIGURATION
 # ============================================================
 
+# Explicitly allow the deployed React frontend.
+# Keep the legacy Render frontend URL temporarily so an older
+# deployment can still communicate with the API.
 CORS_ALLOWED_ORIGINS = [
+    "https://spice-garden-1j9d.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
@@ -144,12 +149,32 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(
-        FRONTEND_URL
-    )
+# Also read any origins supplied through Render.
+ENV_CORS_ALLOWED_ORIGINS = config(
+    "CORS_ALLOWED_ORIGINS",
+    default="",
+    cast=Csv(),
+)
 
+for origin in ENV_CORS_ALLOWED_ORIGINS:
+    origin = origin.strip().rstrip("/")
+    if origin and origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(origin)
+
+# Always include FRONTEND_URL from Render.
+if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+
+# Explicitly allow the headers used by Axios/JSON/JWT requests.
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "Authorization",
+]
+
+# Cache successful preflight responses.
+CORS_PREFLIGHT_MAX_AGE = 86400
 
 
 # ============================================================
@@ -157,6 +182,7 @@ CORS_ALLOW_CREDENTIALS = True
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://spice-garden-1j9d.onrender.com",
     "https://spice-garden-frontend.onrender.com",
 
     # Local development
@@ -164,10 +190,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(
-        FRONTEND_URL
-    )
+if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
+
+for origin in ENV_CORS_ALLOWED_ORIGINS:
+    origin = origin.strip().rstrip("/")
+    if origin and origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 
 # ============================================================
@@ -503,6 +532,14 @@ RESEND_API_KEY = config(
 # PRODUCTION SECURITY
 # ============================================================
 
+# Render terminates HTTPS at its proxy. Tell Django which forwarded
+# protocol represents the original client request so preflight/API
+# requests are not redirected unexpectedly.
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
 if not DEBUG:
 
     CSRF_COOKIE_SECURE = True
@@ -510,11 +547,6 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
 
     SECURE_SSL_REDIRECT = True
-
-    SECURE_PROXY_SSL_HEADER = (
-        "HTTP_X_FORWARDED_PROTO",
-        "https",
-    )
 
     SECURE_HSTS_SECONDS = 31536000
 
