@@ -8,6 +8,7 @@ from .views import (
     CustomerListView,
     ForgotPasswordView,
     ResetPasswordView,
+    GoogleLoginView,
 )
 
 
@@ -33,6 +34,16 @@ urlpatterns = [
         "logout/",
         LogoutView.as_view(),
         name="logout",
+    ),
+
+    # =========================================================
+    # GOOGLE LOGIN
+    # =========================================================
+
+    path(
+        "google/",
+        GoogleLoginView.as_view(),
+        name="google-login",
     ),
 
     # =========================================================
