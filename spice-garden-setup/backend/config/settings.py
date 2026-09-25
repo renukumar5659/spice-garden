@@ -51,7 +51,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
 
-    # CORRECT RENDER BACKEND
+    # Production backend
     "spice-garden-backend-f1zi.onrender.com",
 ]
 
@@ -193,10 +193,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # MUST be before CommonMiddleware
+    # IMPORTANT:
+    # CORS middleware MUST come before CommonMiddleware.
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
+
     "django.middleware.common.CommonMiddleware",
 
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -211,24 +213,47 @@ MIDDLEWARE = [
 # CORS CONFIGURATION
 # ============================================================
 
+# IMPORTANT:
+# This is the actual production frontend.
+#
+# Do NOT add a trailing slash.
+#
+# Correct:
+# https://spice-garden-jl9d.onrender.com
+#
+# Wrong:
+# https://spice-garden-jl9d.onrender.com/
+#
+
 CORS_ALLOWED_ORIGINS = [
-    # CURRENT PRODUCTION FRONTEND
     "https://spice-garden-jl9d.onrender.com",
 
-    # OLD FRONTEND - keep temporarily
+    # Old frontend - keep temporarily
     "https://spice-garden-frontend.onrender.com",
 
-    # LOCAL DEVELOPMENT
+    # Local development
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
-# Add FRONTEND_URL automatically
-if (
-    FRONTEND_URL
-    and FRONTEND_URL not in CORS_ALLOWED_ORIGINS
-):
-    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+
+# ============================================================
+# CORS ORIGIN REGEX
+# ============================================================
+
+# Allows Render preview/frontend subdomains if needed.
+#
+# This does NOT replace the exact production origin above.
+#
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+]
+
+
+# ============================================================
+# CORS CREDENTIALS
+# ============================================================
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -265,26 +290,27 @@ CORS_ALLOW_HEADERS = [
 
 
 # ============================================================
+# CORS PREFLIGHT CACHE
+# ============================================================
+
+CORS_PREFLIGHT_MAX_AGE = 86400
+
+
+# ============================================================
 # CSRF TRUSTED ORIGINS
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
-    # CURRENT PRODUCTION FRONTEND
+    # Current production frontend
     "https://spice-garden-jl9d.onrender.com",
 
-    # OLD FRONTEND
+    # Old frontend
     "https://spice-garden-frontend.onrender.com",
 
-    # LOCAL DEVELOPMENT
+    # Local development
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
-
-if (
-    FRONTEND_URL
-    and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS
-):
-    CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 
 # ============================================================
