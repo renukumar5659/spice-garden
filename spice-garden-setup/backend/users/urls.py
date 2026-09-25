@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    GoogleLoginView,
     LoginView,
     RegisterView,
     ProfileView,
@@ -8,9 +9,7 @@ from .views import (
     CustomerListView,
     ForgotPasswordView,
     ResetPasswordView,
-    GoogleLoginView,
 )
-
 
 urlpatterns = [
 

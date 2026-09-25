@@ -1,18 +1,21 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.hashers import make_password
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
 from rest_framework import generics, permissions, status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.permissions import AllowAny
+from .serializers import UserSerializer
 
 class GoogleLoginView(APIView):
     """
