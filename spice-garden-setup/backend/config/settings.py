@@ -193,21 +193,19 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # IMPORTANT:
-    # CORS middleware MUST come before CommonMiddleware.
+    # Our explicit CORS handler MUST be first
+    "users.middleware.GoogleCORSMiddleware",
+
+    # django-cors-headers
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
-
     "django.middleware.common.CommonMiddleware",
-
     "django.middleware.csrf.CsrfViewMiddleware",
-
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 
 # ============================================================
 # CORS CONFIGURATION
@@ -228,16 +226,14 @@ MIDDLEWARE = [
 # ============================================================
 # CORS
 # ============================================================
+
 CORS_ALLOWED_ORIGINS = [
     "https://spice-garden-jl9d.onrender.com",
-    "https://spice-garden-frontend.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_URLS_REGEX = r"^/api/.*$"
 
 
 # ============================================================
