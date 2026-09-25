@@ -1,61 +1,8 @@
 import api from "./api";
 
 // ============================================================
-// HELPER: EXTRACT ARRAY FROM API RESPONSE
-// ============================================================
-
-function extractArray(data, type = "items") {
-  // Normal array response
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  // Django REST Framework paginated response
-  // {
-  //   "count": 12,
-  //   "next": null,
-  //   "previous": null,
-  //   "results": [...]
-  // }
-  if (Array.isArray(data?.results)) {
-    return data.results;
-  }
-
-  // Custom categories response
-  if (
-    type === "categories" &&
-    Array.isArray(data?.categories)
-  ) {
-    return data.categories;
-  }
-
-  // Custom menu response
-  if (
-    type === "items" &&
-    Array.isArray(data?.items)
-  ) {
-    return data.items;
-  }
-
-  if (
-    type === "items" &&
-    Array.isArray(data?.menu_items)
-  ) {
-    return data.menu_items;
-  }
-
-  console.warn(
-    "Unexpected API response:",
-    data
-  );
-
-  return [];
-}
-
-
-// ============================================================
 // FETCH CATEGORIES
-// Backend: /api/categories/
+// GET /api/categories/
 // ============================================================
 
 export async function fetchCategories(params = {}) {
@@ -66,125 +13,75 @@ export async function fetchCategories(params = {}) {
     }
   );
 
-  return extractArray(
-    response.data,
-    "categories"
-  );
-}
+  const data = response.data;
 
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.categories)) {
+    return data.categories;
+  }
+
+  console.warn(
+    "Unexpected categories API response:",
+    data
+  );
+
+  return [];
+}
 
 // ============================================================
 // FETCH MENU ITEMS
-// Backend: /api/menu/
+// GET /api/menu/
 // ============================================================
 
-export async function fetchMenuItems(params = {}) {
-  let allItems = [];
-  let page = 1;
-
-  while (true) {
-    const response = await api.get(
-      "/menu/",
-      {
-        params: {
-          ...params,
-          page,
-        },
-      }
-    );
-
-    const data = response.data;
-
-    // --------------------------------------------------------
-    // Normal array response
-    // --------------------------------------------------------
-
-    if (Array.isArray(data)) {
-      allItems = [
-        ...allItems,
-        ...data,
-      ];
-
-      break;
+export async function fetchMenuItems(
+  params = {}
+) {
+  const response = await api.get(
+    "/menu/",
+    {
+      params,
     }
+  );
 
-    // --------------------------------------------------------
-    // Django REST Framework pagination
-    // --------------------------------------------------------
+  const data = response.data;
 
-    if (Array.isArray(data?.results)) {
-      allItems = [
-        ...allItems,
-        ...data.results,
-      ];
-
-      // No next page
-      if (!data.next) {
-        break;
-      }
-
-      page += 1;
-
-      continue;
-    }
-
-    // --------------------------------------------------------
-    // Custom response:
-    // { items: [...] }
-    // --------------------------------------------------------
-
-    if (Array.isArray(data?.items)) {
-      allItems = [
-        ...allItems,
-        ...data.items,
-      ];
-
-      break;
-    }
-
-    // --------------------------------------------------------
-    // Custom response:
-    // { menu_items: [...] }
-    // --------------------------------------------------------
-
-    if (
-      Array.isArray(data?.menu_items)
-    ) {
-      allItems = [
-        ...allItems,
-        ...data.menu_items,
-      ];
-
-      break;
-    }
-
-    // --------------------------------------------------------
-    // Unexpected response
-    // --------------------------------------------------------
-
-    console.warn(
-      "Unexpected menu API response:",
-      data
-    );
-
-    break;
+  // Normal array
+  if (Array.isArray(data)) {
+    return data;
   }
 
-  // IMPORTANT:
-  // Always return an array.
-  // This prevents:
-  // "r.map is not a function"
-  // --------------------------------------------------------
+  // DRF pagination
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
 
-  return Array.isArray(allItems)
-    ? allItems
-    : [];
+  // Custom response
+  if (Array.isArray(data?.items)) {
+    return data.items;
+  }
+
+  if (Array.isArray(data?.menu_items)) {
+    return data.menu_items;
+  }
+
+  console.warn(
+    "Unexpected menu API response:",
+    data
+  );
+
+  return [];
 }
-
 
 // ============================================================
 // FETCH SINGLE MENU ITEM
-// Backend: /api/menu/<id>/
+// GET /api/menu/<id>/
 // ============================================================
 
 export async function fetchMenuItem(id) {
@@ -194,17 +91,16 @@ export async function fetchMenuItem(id) {
     );
   }
 
-  const response = await api.get(
+  const { data } = await api.get(
     `/menu/${id}/`
   );
 
-  return response.data;
+  return data;
 }
-
 
 // ============================================================
 // CREATE MENU ITEM
-// Backend: /api/menu/
+// POST /api/menu/
 // ============================================================
 
 export async function createMenuItem(
@@ -218,10 +114,9 @@ export async function createMenuItem(
   return data;
 }
 
-
 // ============================================================
 // UPDATE MENU ITEM
-// Backend: /api/menu/<id>/
+// PATCH /api/menu/<id>/
 // ============================================================
 
 export async function updateMenuItem(
@@ -242,10 +137,9 @@ export async function updateMenuItem(
   return data;
 }
 
-
 // ============================================================
 // DELETE MENU ITEM
-// Backend: /api/menu/<id>/
+// DELETE /api/menu/<id>/
 // ============================================================
 
 export async function deleteMenuItem(
@@ -264,10 +158,9 @@ export async function deleteMenuItem(
   return true;
 }
 
-
 // ============================================================
 // CREATE CATEGORY
-// Backend: /api/categories/
+// POST /api/categories/
 // ============================================================
 
 export async function createCategory(
@@ -281,10 +174,9 @@ export async function createCategory(
   return data;
 }
 
-
 // ============================================================
 // UPDATE CATEGORY
-// Backend: /api/categories/<id>/
+// PATCH /api/categories/<id>/
 // ============================================================
 
 export async function updateCategory(
@@ -305,10 +197,9 @@ export async function updateCategory(
   return data;
 }
 
-
 // ============================================================
 // DELETE CATEGORY
-// Backend: /api/categories/<id>/
+// DELETE /api/categories/<id>/
 // ============================================================
 
 export async function deleteCategory(

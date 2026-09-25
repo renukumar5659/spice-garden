@@ -4,8 +4,18 @@ import axios from "axios";
 // API BASE URL
 // ============================================================
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "/api";
+// IMPORTANT:
+// On Render, VITE_API_URL must point to the Django backend.
+//
+// Example:
+// https://YOUR-BACKEND.onrender.com/api
+//
+// Locally:
+// /api
+//
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "/api"
+).replace(/\/+$/, "");
 
 // ============================================================
 // AXIOS INSTANCE
@@ -13,7 +23,7 @@ const API_BASE_URL =
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 30000,
 });
 
 // ============================================================
@@ -62,19 +72,13 @@ api.interceptors.request.use(
     if (token) {
       config.headers = config.headers || {};
 
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
-    /*
-     * IMPORTANT:
-     * Do NOT force Content-Type: application/json here.
-     *
-     * This allows FormData requests to automatically use:
-     * multipart/form-data; boundary=...
-     *
-     * This is required for menu image uploads.
-     */
+    // DO NOT manually set Content-Type here.
+    //
+    // Axios will automatically set the correct
+    // multipart/form-data boundary when FormData is used.
 
     return config;
   },
@@ -97,9 +101,7 @@ async function refreshAccessToken() {
   const refresh = getRefreshToken();
 
   if (!refresh) {
-    throw new Error(
-      "No refresh token available."
-    );
+    throw new Error("No refresh token available.");
   }
 
   if (refreshPromise) {
@@ -114,17 +116,13 @@ async function refreshAccessToken() {
       },
       {
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
       }
     )
     .then((response) => {
-      const newAccess =
-        response.data?.access;
-
-      const newRefresh =
-        response.data?.refresh;
+      const newAccess = response.data?.access;
+      const newRefresh = response.data?.refresh;
 
       if (!newAccess) {
         throw new Error(
@@ -158,21 +156,25 @@ async function refreshAccessToken() {
 // ============================================================
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
 
   async (error) => {
-    const originalRequest =
-      error.config;
+    const originalRequest = error.config;
 
     // No server response
     if (!error.response) {
+      console.error(
+        "API connection error:",
+        error.message
+      );
+
       return Promise.reject(error);
     }
 
     // Only handle 401
-    if (
-      error.response.status !== 401
-    ) {
+    if (error.response.status !== 401) {
       return Promise.reject(error);
     }
 
@@ -180,15 +182,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Do not retry twice
+    // Prevent infinite retry
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    const requestURL =
-      originalRequest.url || "";
+    const requestURL = originalRequest.url || "";
 
-    // Never refresh refresh endpoint
+    // Never refresh the refresh endpoint itself
     if (
       requestURL.includes(
         "/auth/token/refresh/"
@@ -201,8 +202,7 @@ api.interceptors.response.use(
 
     originalRequest._retry = true;
 
-    const refresh =
-      getRefreshToken();
+    const refresh = getRefreshToken();
 
     if (!refresh) {
       clearTokens();
