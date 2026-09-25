@@ -3,11 +3,10 @@ from django.http import JsonResponse
 
 class GoogleCORSMiddleware:
     """
-    CORS middleware for the Spice Garden frontend.
+    Handles CORS for the Spice Garden production frontend.
 
-    Handles:
-    - OPTIONS preflight requests
-    - Normal requests from the production frontend
+    This middleware specifically handles OPTIONS preflight
+    requests before Django tries to resolve the URL.
     """
 
     FRONTEND_ORIGIN = "https://spice-garden-jl9d.onrender.com"
@@ -19,10 +18,9 @@ class GoogleCORSMiddleware:
 
         origin = request.headers.get("Origin")
 
-        # ========================================================
-        # OPTIONS / PREFLIGHT REQUEST
-        # ========================================================
-
+        # =====================================================
+        # CORS PRELIGHT REQUEST
+        # =====================================================
         if request.method == "OPTIONS":
 
             response = JsonResponse(
@@ -48,8 +46,7 @@ class GoogleCORSMiddleware:
                     "DNT, "
                     "Origin, "
                     "User-Agent, "
-                    "X-Requested-With, "
-                    "X-CSRFToken"
+                    "X-Requested-With"
                 )
 
                 response["Access-Control-Max-Age"] = "86400"
@@ -58,9 +55,9 @@ class GoogleCORSMiddleware:
 
             return response
 
-        # ========================================================
+        # =====================================================
         # NORMAL REQUEST
-        # ========================================================
+        # =====================================================
 
         response = self.get_response(request)
 
