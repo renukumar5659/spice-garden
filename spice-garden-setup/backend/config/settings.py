@@ -50,7 +50,9 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get(
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "spice-garden-backend-flzi.onrender.com",
+
+    # CORRECT RENDER BACKEND
+    "spice-garden-backend-f1zi.onrender.com",
 ]
 
 if RENDER_EXTERNAL_HOSTNAME:
@@ -166,14 +168,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # CORS
     "corsheaders",
 
+    # Cloudinary
     "cloudinary",
     "cloudinary_storage",
 
+    # Django REST Framework
     "rest_framework",
     "rest_framework_simplejwt",
 
+    # Project apps
     "users",
     "menu",
     "orders",
@@ -187,7 +193,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    # CORS MUST be before CommonMiddleware
+    # MUST be before CommonMiddleware
     "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -209,8 +215,7 @@ CORS_ALLOWED_ORIGINS = [
     # CURRENT PRODUCTION FRONTEND
     "https://spice-garden-jl9d.onrender.com",
 
-    # OLD FRONTEND URL - kept temporarily so old deployments
-    # do not suddenly lose access
+    # OLD FRONTEND - keep temporarily
     "https://spice-garden-frontend.onrender.com",
 
     # LOCAL DEVELOPMENT
@@ -218,11 +223,45 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-# Add FRONTEND_URL from Render environment
-if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+# Add FRONTEND_URL automatically
+if (
+    FRONTEND_URL
+    and FRONTEND_URL not in CORS_ALLOWED_ORIGINS
+):
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CORS_ALLOW_CREDENTIALS = True
+
+
+# ============================================================
+# CORS METHODS
+# ============================================================
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+
+# ============================================================
+# CORS HEADERS
+# ============================================================
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 
 # ============================================================
@@ -233,7 +272,7 @@ CSRF_TRUSTED_ORIGINS = [
     # CURRENT PRODUCTION FRONTEND
     "https://spice-garden-jl9d.onrender.com",
 
-    # OLD FRONTEND URL
+    # OLD FRONTEND
     "https://spice-garden-frontend.onrender.com",
 
     # LOCAL DEVELOPMENT
@@ -241,7 +280,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-if FRONTEND_URL and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS:
+if (
+    FRONTEND_URL
+    and FRONTEND_URL not in CSRF_TRUSTED_ORIGINS
+):
     CSRF_TRUSTED_ORIGINS.append(FRONTEND_URL)
 
 
@@ -261,11 +303,8 @@ TEMPLATES = [
         "BACKEND": (
             "django.template.backends.django.DjangoTemplates"
         ),
-
         "DIRS": [],
-
         "APP_DIRS": True,
-
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -382,10 +421,12 @@ CLOUDINARY_STORAGE = {
         "CLOUDINARY_CLOUD_NAME",
         default="",
     ),
+
     "API_KEY": config(
         "CLOUDINARY_API_KEY",
         default="",
     ),
+
     "API_SECRET": config(
         "CLOUDINARY_API_SECRET",
         default="",
@@ -417,6 +458,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Uploaded files such as menu images are stored in Cloudinary.
 # Static files continue to use WhiteNoise.
+
 STORAGES = {
     "default": {
         "BACKEND": (
