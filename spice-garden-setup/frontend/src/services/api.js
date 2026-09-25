@@ -4,15 +4,12 @@ import axios from "axios";
 // API BASE URL
 // ============================================================
 
-// IMPORTANT:
-// On Render, VITE_API_URL must point to the Django backend.
+// Production:
+// VITE_API_URL = https://spice-garden-backend-f1zi.onrender.com/api
 //
-// Example:
-// https://YOUR-BACKEND.onrender.com/api
-//
-// Locally:
-// /api
-//
+// Local development:
+// VITE_API_URL = /api
+
 const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "/api"
 ).replace(/\/+$/, "");
@@ -42,13 +39,22 @@ export function getRefreshToken() {
 // SAVE TOKENS
 // ============================================================
 
-export function setTokens({ access, refresh }) {
+export function setTokens({
+  access,
+  refresh,
+}) {
   if (access) {
-    localStorage.setItem("sg_access", access);
+    localStorage.setItem(
+      "sg_access",
+      access
+    );
   }
 
   if (refresh) {
-    localStorage.setItem("sg_refresh", refresh);
+    localStorage.setItem(
+      "sg_refresh",
+      refresh
+    );
   }
 }
 
@@ -70,18 +76,27 @@ api.interceptors.request.use(
     const token = getAccessToken();
 
     if (token) {
-      config.headers = config.headers || {};
+      config.headers =
+        config.headers || {};
 
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
-    // DO NOT manually set Content-Type here.
-    //
-    // Axios will automatically set the correct
-    // multipart/form-data boundary when FormData is used.
+    /*
+     * IMPORTANT:
+     * Do NOT manually set Content-Type here.
+     *
+     * This allows Axios to correctly handle:
+     *
+     * FormData
+     * multipart/form-data
+     * image uploads
+     */
 
     return config;
   },
+
   (error) => {
     return Promise.reject(error);
   }
@@ -98,10 +113,13 @@ let refreshPromise = null;
 // ============================================================
 
 async function refreshAccessToken() {
-  const refresh = getRefreshToken();
+  const refresh =
+    getRefreshToken();
 
   if (!refresh) {
-    throw new Error("No refresh token available.");
+    throw new Error(
+      "No refresh token available."
+    );
   }
 
   if (refreshPromise) {
@@ -116,13 +134,17 @@ async function refreshAccessToken() {
       },
       {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         },
       }
     )
     .then((response) => {
-      const newAccess = response.data?.access;
-      const newRefresh = response.data?.refresh;
+      const newAccess =
+        response.data?.access;
+
+      const newRefresh =
+        response.data?.refresh;
 
       if (!newAccess) {
         throw new Error(
@@ -161,9 +183,13 @@ api.interceptors.response.use(
   },
 
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest =
+      error.config;
 
-    // No server response
+    // ========================================================
+    // NO SERVER RESPONSE
+    // ========================================================
+
     if (!error.response) {
       console.error(
         "API connection error:",
@@ -173,8 +199,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Only handle 401
-    if (error.response.status !== 401) {
+    // ========================================================
+    // ONLY HANDLE 401
+    // ========================================================
+
+    if (
+      error.response.status !== 401
+    ) {
       return Promise.reject(error);
     }
 
@@ -182,14 +213,21 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Prevent infinite retry
+    // ========================================================
+    // PREVENT INFINITE RETRY
+    // ========================================================
+
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    const requestURL = originalRequest.url || "";
+    const requestURL =
+      originalRequest.url || "";
 
-    // Never refresh the refresh endpoint itself
+    // ========================================================
+    // NEVER REFRESH REFRESH ENDPOINT
+    // ========================================================
+
     if (
       requestURL.includes(
         "/auth/token/refresh/"
@@ -202,13 +240,18 @@ api.interceptors.response.use(
 
     originalRequest._retry = true;
 
-    const refresh = getRefreshToken();
+    const refresh =
+      getRefreshToken();
 
     if (!refresh) {
       clearTokens();
 
       return Promise.reject(error);
     }
+
+    // ========================================================
+    // REFRESH TOKEN
+    // ========================================================
 
     try {
       const newAccess =

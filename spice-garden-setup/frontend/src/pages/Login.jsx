@@ -20,6 +20,37 @@ export default function Login() {
   useEffect(() => {
     let cancelled = false;
 
+    function handleGoogleCredential(response) {
+      if (!response?.credential) {
+        setError("Google Sign-In failed. Please try again.");
+        return;
+      }
+
+      setError("");
+      setSubmitting(true);
+
+      authService
+        .googleLogin(response.credential)
+        .then((user) => {
+          if (cancelled) return;
+
+          window.location.href = user?.is_staff ? "/admin" : from;
+        })
+        .catch((err) => {
+          if (cancelled) return;
+
+          console.error("Google login error:", err);
+
+          setError(
+            err?.response?.data?.detail ||
+              err?.response?.data?.message ||
+              "Google Sign-In failed. Please try again."
+          );
+
+          setSubmitting(false);
+        });
+    }
+
     function renderGoogleButton() {
       if (
         cancelled ||
@@ -29,10 +60,13 @@ export default function Login() {
         return;
       }
 
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      const clientId =
+        import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
       if (!clientId) {
-        setError("Google Sign-In is not configured.");
+        setError(
+          "Google Sign-In is not configured."
+        );
         return;
       }
 
@@ -55,8 +89,14 @@ export default function Login() {
           }
         );
       } catch (err) {
-        console.error("Google Sign-In error:", err);
-        setError("Google Sign-In could not be loaded.");
+        console.error(
+          "Google Sign-In error:",
+          err
+        );
+
+        setError(
+          "Google Sign-In could not be loaded."
+        );
       }
     }
 
@@ -66,27 +106,38 @@ export default function Login() {
         return;
       }
 
-      const existingScript = document.querySelector(
-        'script[src="https://accounts.google.com/gsi/client"]'
-      );
+      const existingScript =
+        document.querySelector(
+          'script[src="https://accounts.google.com/gsi/client"]'
+        );
 
       if (existingScript) {
-        existingScript.addEventListener("load", renderGoogleButton, {
-          once: true,
-        });
+        existingScript.addEventListener(
+          "load",
+          renderGoogleButton,
+          { once: true }
+        );
+
         return;
       }
 
-      const script = document.createElement("script");
+      const script =
+        document.createElement("script");
 
-      script.src = "https://accounts.google.com/gsi/client";
+      script.src =
+        "https://accounts.google.com/gsi/client";
+
       script.async = true;
       script.defer = true;
 
       script.onload = renderGoogleButton;
 
       script.onerror = () => {
-        setError("Unable to load Google Sign-In.");
+        if (!cancelled) {
+          setError(
+            "Unable to load Google Sign-In."
+          );
+        }
       };
 
       document.head.appendChild(script);
@@ -97,32 +148,7 @@ export default function Login() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  async function handleGoogleCredential(response) {
-    if (!response?.credential) {
-      setError("Google Sign-In failed. Please try again.");
-      return;
-    }
-
-    setError("");
-    setSubmitting(true);
-
-    try {
-      const user = await authService.googleLogin(response.credential);
-
-      window.location.href = user.is_staff ? "/admin" : from;
-    } catch (err) {
-      console.error("Google login error:", err);
-
-      setError(
-        err.response?.data?.detail ||
-          "Google Sign-In failed. Please try again."
-      );
-
-      setSubmitting(false);
-    }
-  }
+  }, [from]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -131,14 +157,26 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const user = await login(email, password);
+      const user = await login(
+        email,
+        password
+      );
 
-      navigate(user.is_staff ? "/admin" : from, {
-        replace: true,
-      });
+      navigate(
+        user?.is_staff ? "/admin" : from,
+        {
+          replace: true,
+        }
+      );
     } catch (err) {
+      console.error(
+        "Login error:",
+        err
+      );
+
       setError(
-        err.response?.data?.detail ||
+        err?.response?.data?.detail ||
+          err?.response?.data?.message ||
           "Invalid email or password."
       );
 
@@ -148,7 +186,10 @@ export default function Login() {
 
   return (
     <div className="container section-tight auth-page">
-      <form className="card auth-form" onSubmit={handleSubmit}>
+      <form
+        className="card auth-form"
+        onSubmit={handleSubmit}
+      >
         <h1>Welcome back</h1>
 
         <p className="auth-sub">
@@ -162,26 +203,36 @@ export default function Login() {
         )}
 
         <div className="field">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">
+            Email
+          </label>
 
           <input
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
             required
+            autoComplete="email"
           />
         </div>
 
         <div className="field">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">
+            Password
+          </label>
 
           <input
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             required
+            autoComplete="current-password"
           />
         </div>
 
@@ -202,7 +253,9 @@ export default function Login() {
           className="btn btn-primary btn-block"
           disabled={submitting}
         >
-          {submitting ? "Logging in…" : "Login"}
+          {submitting
+            ? "Logging in…"
+            : "Login"}
         </button>
 
         <div
