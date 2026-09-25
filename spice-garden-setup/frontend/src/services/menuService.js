@@ -1,36 +1,75 @@
 import api from "./api";
 
 // ============================================================
+// HELPER: EXTRACT ARRAY FROM API RESPONSE
+// ============================================================
+
+function extractArray(data, type = "items") {
+  // Normal array response
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  // Django REST Framework paginated response
+  // {
+  //   "count": 12,
+  //   "next": null,
+  //   "previous": null,
+  //   "results": [...]
+  // }
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  // Custom categories response
+  if (
+    type === "categories" &&
+    Array.isArray(data?.categories)
+  ) {
+    return data.categories;
+  }
+
+  // Custom menu response
+  if (
+    type === "items" &&
+    Array.isArray(data?.items)
+  ) {
+    return data.items;
+  }
+
+  if (
+    type === "items" &&
+    Array.isArray(data?.menu_items)
+  ) {
+    return data.menu_items;
+  }
+
+  console.warn(
+    "Unexpected API response:",
+    data
+  );
+
+  return [];
+}
+
+
+// ============================================================
 // FETCH CATEGORIES
 // Backend: /api/categories/
 // ============================================================
 
 export async function fetchCategories(params = {}) {
-  const { data } = await api.get(
+  const response = await api.get(
     "/categories/",
     {
       params,
     }
   );
 
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  if (Array.isArray(data?.results)) {
-    return data.results;
-  }
-
-  if (Array.isArray(data?.categories)) {
-    return data.categories;
-  }
-
-  console.warn(
-    "Unexpected categories API response:",
-    data
+  return extractArray(
+    response.data,
+    "categories"
   );
-
-  return [];
 }
 
 
@@ -40,11 +79,11 @@ export async function fetchCategories(params = {}) {
 // ============================================================
 
 export async function fetchMenuItems(params = {}) {
-  let page = 1;
   let allItems = [];
+  let page = 1;
 
   while (true) {
-    const { data } = await api.get(
+    const response = await api.get(
       "/menu/",
       {
         params: {
@@ -54,7 +93,12 @@ export async function fetchMenuItems(params = {}) {
       }
     );
 
-    // Normal array
+    const data = response.data;
+
+    // --------------------------------------------------------
+    // Normal array response
+    // --------------------------------------------------------
+
     if (Array.isArray(data)) {
       allItems = [
         ...allItems,
@@ -64,22 +108,31 @@ export async function fetchMenuItems(params = {}) {
       break;
     }
 
-    // DRF pagination
+    // --------------------------------------------------------
+    // Django REST Framework pagination
+    // --------------------------------------------------------
+
     if (Array.isArray(data?.results)) {
       allItems = [
         ...allItems,
         ...data.results,
       ];
 
+      // No next page
       if (!data.next) {
         break;
       }
 
       page += 1;
+
       continue;
     }
 
-    // Custom response
+    // --------------------------------------------------------
+    // Custom response:
+    // { items: [...] }
+    // --------------------------------------------------------
+
     if (Array.isArray(data?.items)) {
       allItems = [
         ...allItems,
@@ -89,7 +142,14 @@ export async function fetchMenuItems(params = {}) {
       break;
     }
 
-    if (Array.isArray(data?.menu_items)) {
+    // --------------------------------------------------------
+    // Custom response:
+    // { menu_items: [...] }
+    // --------------------------------------------------------
+
+    if (
+      Array.isArray(data?.menu_items)
+    ) {
       allItems = [
         ...allItems,
         ...data.menu_items,
@@ -97,6 +157,10 @@ export async function fetchMenuItems(params = {}) {
 
       break;
     }
+
+    // --------------------------------------------------------
+    // Unexpected response
+    // --------------------------------------------------------
 
     console.warn(
       "Unexpected menu API response:",
@@ -106,7 +170,15 @@ export async function fetchMenuItems(params = {}) {
     break;
   }
 
-  return allItems;
+  // IMPORTANT:
+  // Always return an array.
+  // This prevents:
+  // "r.map is not a function"
+  // --------------------------------------------------------
+
+  return Array.isArray(allItems)
+    ? allItems
+    : [];
 }
 
 
@@ -122,11 +194,11 @@ export async function fetchMenuItem(id) {
     );
   }
 
-  const { data } = await api.get(
+  const response = await api.get(
     `/menu/${id}/`
   );
 
-  return data;
+  return response.data;
 }
 
 
@@ -135,7 +207,9 @@ export async function fetchMenuItem(id) {
 // Backend: /api/menu/
 // ============================================================
 
-export async function createMenuItem(payload) {
+export async function createMenuItem(
+  payload
+) {
   const { data } = await api.post(
     "/menu/",
     payload
@@ -174,7 +248,9 @@ export async function updateMenuItem(
 // Backend: /api/menu/<id>/
 // ============================================================
 
-export async function deleteMenuItem(id) {
+export async function deleteMenuItem(
+  id
+) {
   if (!id) {
     throw new Error(
       "Menu item ID is required."
@@ -194,7 +270,9 @@ export async function deleteMenuItem(id) {
 // Backend: /api/categories/
 // ============================================================
 
-export async function createCategory(payload) {
+export async function createCategory(
+  payload
+) {
   const { data } = await api.post(
     "/categories/",
     payload
@@ -233,7 +311,9 @@ export async function updateCategory(
 // Backend: /api/categories/<id>/
 // ============================================================
 
-export async function deleteCategory(id) {
+export async function deleteCategory(
+  id
+) {
   if (!id) {
     throw new Error(
       "Category ID is required."

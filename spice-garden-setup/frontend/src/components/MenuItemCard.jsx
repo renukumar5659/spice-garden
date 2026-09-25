@@ -3,23 +3,49 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 
-const API_ORIGIN =
-  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
-  "http://127.0.0.1:8000";
+// =========================================================
+// BACKEND URL
+// =========================================================
+
+const BACKEND_ORIGIN =
+  import.meta.env.VITE_BACKEND_URL ||
+  "https://spice-garden-backend-flzi.onrender.com";
+
+// =========================================================
+// IMAGE URL HELPER
+// =========================================================
 
 function getImageUrl(image) {
   if (!image) {
     return "";
   }
 
-  // Django API already returned a full URL
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
+  const imageString = String(image).trim();
+
+  // Already a complete URL
+  if (
+    imageString.startsWith("http://") ||
+    imageString.startsWith("https://")
+  ) {
+    return imageString;
   }
 
-  // Django returned a relative media path
-  return `${API_ORIGIN}${image.startsWith("/") ? "" : "/"}${image}`;
+  // Django returned a relative path such as:
+  // /media/menu/chicken-tikka.jpg
+  //
+  // or:
+  // media/menu/chicken-tikka.jpg
+
+  const path = imageString.startsWith("/")
+    ? imageString
+    : `/${imageString}`;
+
+  return `${BACKEND_ORIGIN}${path}`;
 }
+
+// =========================================================
+// MENU ITEM CARD
+// =========================================================
 
 export default function MenuItemCard({ item }) {
   const { addItem } = useCart();
@@ -30,6 +56,7 @@ export default function MenuItemCard({ item }) {
     e.stopPropagation();
 
     addItem(item, 1);
+
     showToast(`${item.name} added to cart`);
   }
 
@@ -40,7 +67,10 @@ export default function MenuItemCard({ item }) {
       to={`/menu/${item.id}`}
       className="menu-card card"
     >
-      {/* Food Image */}
+      {/* =====================================================
+          FOOD IMAGE
+          ===================================================== */}
+
       <div className="menu-card-image">
         {imageUrl ? (
           <img
@@ -48,6 +78,12 @@ export default function MenuItemCard({ item }) {
             alt={item.name}
             loading="lazy"
             className="menu-item-image"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+              e.currentTarget.parentElement.classList.add(
+                "image-load-error"
+              );
+            }}
           />
         ) : (
           <div className="menu-card-placeholder">
@@ -56,7 +92,10 @@ export default function MenuItemCard({ item }) {
         )}
       </div>
 
-      {/* Food Details */}
+      {/* =====================================================
+          FOOD DETAILS
+          ===================================================== */}
+
       <div className="menu-card-body">
         <h3>{item.name}</h3>
 
@@ -64,7 +103,10 @@ export default function MenuItemCard({ item }) {
           {item.description || ""}
         </p>
 
-        {/* Price + Add to Cart */}
+        {/* ===================================================
+            PRICE + ADD TO CART
+            =================================================== */}
+
         <div className="menu-card-footer">
           <span className="menu-card-price">
             ₹{Number(item.price).toFixed(0)}
