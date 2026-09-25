@@ -217,7 +217,7 @@ MIDDLEWARE = [
 # ============================================================
 
 CORS_ALLOWED_ORIGINS = [
-    # Current production frontend
+    # Production frontend
     "https://spice-garden-jl9d.onrender.com",
 
     # Local development
@@ -225,18 +225,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
-
-# ============================================================
-# CORS CREDENTIALS
-# ============================================================
-
+# Allow credentials
 CORS_ALLOW_CREDENTIALS = True
 
+# Apply CORS to API endpoints
+CORS_URLS_REGEX = r"^/api/.*$"
 
-# ============================================================
-# CORS METHODS
-# ============================================================
-
+# Allowed HTTP methods
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -246,11 +241,7 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-
-# ============================================================
-# CORS HEADERS
-# ============================================================
-
+# Allowed request headers
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -263,11 +254,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-
-# ============================================================
-# CORS PREFLIGHT CACHE
-# ============================================================
-
+# Preflight cache
 CORS_PREFLIGHT_MAX_AGE = 86400
 
 
