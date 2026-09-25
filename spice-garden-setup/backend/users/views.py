@@ -1,17 +1,128 @@
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.hashers import make_password
-from django.core.mail import send_mail
-from django.utils.crypto import get_random_string
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
-from rest_framework import status, permissions
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import UserSerializer
+class GoogleLoginView(APIView):
+    """
+    POST /api/auth/google/
 
+    Login or register a user using Google Sign-In.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        credential = request.data.get("credential")
+
+        if not credential:
+            return Response(
+                {
+                    "detail": "Google credential is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not settings.GOOGLE_CLIENT_ID:
+            return Response(
+                {
+                    "detail": "Google Sign-In is not configured on the server."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        try:
+            google_user = id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+
+        except ValueError:
+            return Response(
+                {
+                    "detail": "Invalid Google credential."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        email = google_user.get("email")
+
+        if not email:
+            return Response(
+                {
+                    "detail": "Google account email was not provided."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not google_user.get("email_verified"):
+            return Response(
+                {
+                    "detail": "Google email is not verified."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        User = get_user_model()
+
+        user = User.objects.filter(
+            email__iexact=email
+        ).first()
+
+        # Create account if it doesn't exist
+        if not user:
+            name = (google_user.get("name") or "").strip()
+
+            first_name = (
+                google_user.get("given_name")
+                or (name.split(" ")[0] if name else "")
+            )
+
+            last_name = (
+                google_user.get("family_name")
+                or (
+                    " ".join(name.split(" ")[1:])
+                    if len(name.split(" ")) > 1
+                    else ""
+                )
+            )
+
+            user = User(
+                username=email,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+            )
+
+            user.set_unusable_password()
+            user.save()
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
 User = get_user_model()
 

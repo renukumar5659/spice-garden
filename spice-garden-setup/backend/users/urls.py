@@ -31,19 +31,15 @@ urlpatterns = [
     ),
 
     path(
-        "logout/",
-        LogoutView.as_view(),
-        name="logout",
-    ),
-
-    # =========================================================
-    # GOOGLE LOGIN
-    # =========================================================
-
-    path(
         "google/",
         GoogleLoginView.as_view(),
         name="google-login",
+    ),
+
+    path(
+        "logout/",
+        LogoutView.as_view(),
+        name="logout",
     ),
 
     # =========================================================
