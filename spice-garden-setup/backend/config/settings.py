@@ -228,14 +228,16 @@ MIDDLEWARE = [
 # ============================================================
 # CORS
 # ============================================================
-
 CORS_ALLOWED_ORIGINS = [
     "https://spice-garden-jl9d.onrender.com",
+    "https://spice-garden-frontend.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_URLS_REGEX = r"^/api/.*$"
 
 
 # ============================================================
