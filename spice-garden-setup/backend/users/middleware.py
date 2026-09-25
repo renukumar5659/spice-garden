@@ -3,29 +3,14 @@ from django.http import JsonResponse
 
 class GoogleCORSMiddleware:
     """
-    Explicit CORS handler for the Spice Garden production frontend.
+    CORS middleware for the Spice Garden frontend.
 
-    Handles OPTIONS preflight requests and adds CORS headers
-    to normal API responses.
+    Handles:
+    - OPTIONS preflight requests
+    - Normal requests from the production frontend
     """
 
     FRONTEND_ORIGIN = "https://spice-garden-jl9d.onrender.com"
-
-    ALLOWED_METHODS = (
-        "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    )
-
-    ALLOWED_HEADERS = (
-        "Accept, "
-        "Accept-Encoding, "
-        "Authorization, "
-        "Content-Type, "
-        "DNT, "
-        "Origin, "
-        "User-Agent, "
-        "X-Requested-With, "
-        "X-CSRFToken"
-    )
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -35,7 +20,7 @@ class GoogleCORSMiddleware:
         origin = request.headers.get("Origin")
 
         # ========================================================
-        # CORS PREFLIGHT
+        # OPTIONS / PREFLIGHT REQUEST
         # ========================================================
 
         if request.method == "OPTIONS":
@@ -52,11 +37,19 @@ class GoogleCORSMiddleware:
                 response["Access-Control-Allow-Credentials"] = "true"
 
                 response["Access-Control-Allow-Methods"] = (
-                    self.ALLOWED_METHODS
+                    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
                 )
 
                 response["Access-Control-Allow-Headers"] = (
-                    self.ALLOWED_HEADERS
+                    "Accept, "
+                    "Accept-Encoding, "
+                    "Authorization, "
+                    "Content-Type, "
+                    "DNT, "
+                    "Origin, "
+                    "User-Agent, "
+                    "X-Requested-With, "
+                    "X-CSRFToken"
                 )
 
                 response["Access-Control-Max-Age"] = "86400"
