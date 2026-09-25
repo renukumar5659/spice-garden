@@ -192,9 +192,9 @@ INSTALLED_APPS = [
 # ============================================================
 
 MIDDLEWARE = [
-    # IMPORTANT:
-    # CORS middleware must run before CommonMiddleware.
     "corsheaders.middleware.CorsMiddleware",
+
+    "config.middleware.GoogleCORSMiddleware",
 
     "django.middleware.security.SecurityMiddleware",
 
@@ -210,7 +210,6 @@ MIDDLEWARE = [
 
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 
 # ============================================================
 # CORS CONFIGURATION

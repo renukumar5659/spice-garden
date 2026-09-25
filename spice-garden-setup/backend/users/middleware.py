@@ -3,14 +3,29 @@ from django.http import JsonResponse
 
 class GoogleCORSMiddleware:
     """
-    Explicit CORS handler for the production frontend.
+    Explicit CORS handler for the Spice Garden production frontend.
 
-    This is a fallback for the Google login endpoint when the
-    normal django-cors-headers configuration does not add the
-    required headers to the preflight request.
+    Handles OPTIONS preflight requests and adds CORS headers
+    to normal API responses.
     """
 
     FRONTEND_ORIGIN = "https://spice-garden-jl9d.onrender.com"
+
+    ALLOWED_METHODS = (
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    )
+
+    ALLOWED_HEADERS = (
+        "Accept, "
+        "Accept-Encoding, "
+        "Authorization, "
+        "Content-Type, "
+        "DNT, "
+        "Origin, "
+        "User-Agent, "
+        "X-Requested-With, "
+        "X-CSRFToken"
+    )
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -19,9 +34,10 @@ class GoogleCORSMiddleware:
 
         origin = request.headers.get("Origin")
 
-        # ---------------------------------------------------------
-        # Handle CORS preflight OPTIONS request
-        # ---------------------------------------------------------
+        # ========================================================
+        # CORS PREFLIGHT
+        # ========================================================
+
         if request.method == "OPTIONS":
 
             response = JsonResponse(
@@ -30,34 +46,37 @@ class GoogleCORSMiddleware:
             )
 
             if origin == self.FRONTEND_ORIGIN:
+
                 response["Access-Control-Allow-Origin"] = origin
+
                 response["Access-Control-Allow-Credentials"] = "true"
+
                 response["Access-Control-Allow-Methods"] = (
-                    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                    self.ALLOWED_METHODS
                 )
+
                 response["Access-Control-Allow-Headers"] = (
-                    "Accept, "
-                    "Accept-Encoding, "
-                    "Authorization, "
-                    "Content-Type, "
-                    "DNT, "
-                    "Origin, "
-                    "User-Agent, "
-                    "X-Requested-With"
+                    self.ALLOWED_HEADERS
                 )
+
                 response["Access-Control-Max-Age"] = "86400"
+
+                response["Vary"] = "Origin"
 
             return response
 
-        # ---------------------------------------------------------
-        # Normal request
-        # ---------------------------------------------------------
+        # ========================================================
+        # NORMAL REQUEST
+        # ========================================================
+
         response = self.get_response(request)
 
-        # Add CORS headers to production frontend
         if origin == self.FRONTEND_ORIGIN:
+
             response["Access-Control-Allow-Origin"] = origin
+
             response["Access-Control-Allow-Credentials"] = "true"
+
             response["Vary"] = "Origin"
 
         return response
